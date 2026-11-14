@@ -308,3 +308,6 @@ export const Leaderboard = { open, close, submitScore, getRank };
 // Getter réel (Object.assign figerait la valeur au chargement)
 Object.defineProperty(Leaderboard, "uid", { get: () => myUid, enumerable: true });
 window.SunPilotLB = Leaderboard;
+
+// Récupère l'UID dès que la connexion partagée est prête (aucune lecture Firestore)
+if (CONFIGURED) fb().catch(() => {});
