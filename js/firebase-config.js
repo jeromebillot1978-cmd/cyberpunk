@@ -19,7 +19,7 @@ export const FIREBASE_CONFIG = {
 export const LB_OPTIONS = {
   // Facultatif mais recommandé : clé de site reCAPTCHA v3 pour Firebase App Check.
   // Laissez vide pour désactiver App Check.
-  appCheckSiteKey: "",
+  appCheckSiteKey: "6LdfkiAuAAAAAIeZhi4noUddi4AI6rb17ZlP1iWa",
 
   // Émulateurs locaux (tests) : activés automatiquement avec ?emulator dans l'URL.
   useEmulators: typeof location !== "undefined" && new URLSearchParams(location.search).has("emulator"),
