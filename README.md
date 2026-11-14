@@ -67,11 +67,8 @@ Aucune variable d'environnement n'est nécessaire : la config web Firebase n'est
 
 1. **Domaines autorisés** : Firebase → Authentication → *Paramètres* → *Domaines autorisés* → ajoute `ton-projet.vercel.app` (et ton domaine perso).
 2. **Restreindre la clé API** : https://console.cloud.google.com → ton projet → *API et services* → *Identifiants* → la clé « Browser key » → *Restrictions d'application* : **Sites Web** → ajoute `https://ton-projet.vercel.app/*`, `https://*.vercel.app/*` si tu utilises les previews, et ton domaine.
-3. **App Check (anti-robots)** :
-   - https://www.google.com/recaptcha/admin → crée une clé **reCAPTCHA v3** pour tes domaines.
-   - Firebase → *App Check* → ton app Web → fournisseur reCAPTCHA v3 → colle la **clé secrète**.
-   - Mets la **clé de site** dans `appCheckSiteKey` de `js/firebase-config.js` et redéploie.
-   - Après 1 ou 2 jours, quand les métriques App Check montrent ~100 % de requêtes valides, clique **Appliquer** sur Cloud Firestore. À partir de là, seules les requêtes venant de ton site sont acceptées.
+3. **App Check (anti-robots)** : déjà configuré. Clé reCAPTCHA Fraud Defense (ex-Enterprise, type « score ») créée dans le projet `sun-pilot-jercat`, enregistrée dans Firebase App Check et dans `js/firebase-config.js` (`appCheckSiteKey`). Firebase n'accepte plus les clés reCAPTCHA v3 classiques pour les nouveaux projets.
+   - Pour passer du mode observation au blocage : console Firebase → *App Check* → *APIs* → Cloud Firestore → **Appliquer**, une fois que les métriques montrent ~100 % de requêtes vérifiées.
 
 ## Domaine perso (optionnel, ex. `sunpilot.jercat.fr` chez OVH)
 

@@ -66,10 +66,10 @@ function ready() {
     ]);
     const app = appMod.initializeApp(CONFIG);
 
-    // App Check (reCAPTCHA v3) : bloque les écritures qui ne viennent pas de votre site
+    // App Check (reCAPTCHA Fraud Defense, ex-Enterprise) : prouve que les requêtes viennent de votre site
     if (LB_OPTIONS.appCheckSiteKey && !EMU) {
       const ac = await import(`${CDN}/firebase-app-check.js`);
-      ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(LB_OPTIONS.appCheckSiteKey), isTokenAutoRefreshEnabled: true });
+      ac.initializeAppCheck(app, { provider: new ac.ReCaptchaEnterpriseProvider(LB_OPTIONS.appCheckSiteKey), isTokenAutoRefreshEnabled: true });
     }
 
     const auth = authMod.getAuth(app);
