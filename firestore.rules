@@ -3,8 +3,10 @@ rules_version = '2';
 // =========================================================
 // RÈGLES FIRESTORE — Sun Pilot · Neon Skies
 // ---------------------------------------------------------
-// Collection "scores" : un document par joueur ET par mode,
-// identifiant imposé = "{uid}_{mode}"  → aucun doublon possible.
+// users/{uid}        profil du pilote : { uid, pseudo, createdAt, updatedAt }
+// pseudos/{pseudo}   réservation d'un pseudo (en minuscules) : { uid }
+//                    → garantit l'unicité, insensible à la casse
+// scores/{uid_mode}  meilleur score d'un joueur dans un mode
 // =========================================================
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,22 +15,94 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function pseudoPath(name) {
+      return /databases/$(database)/documents/pseudos/$(name);
+    }
+
+    // Pseudo : 3 à 15 caractères, lettres non accentuées, chiffres, _ et - uniquement
+    function validPseudo(p) {
+      return p is string && p.matches('^[A-Za-z0-9_-]{3,15}$');
+    }
+
     function validMode(m) {
       return m in ['beginner', 'intermediate', 'pro'];
     }
 
-    // Même règle que côté jeu : 2 à 16 caractères, lettres (accents inclus), chiffres, espace . _ -
-    function validPseudo(p) {
-      return p is string && p.matches('^[A-Za-z0-9À-ÖØ-öø-ÿ _.-]{2,16}$');
+    // ---------- Profils ----------
+    function validUser(d, uid) {
+      return d.keys().hasOnly(['uid', 'pseudo', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['uid', 'pseudo', 'createdAt', 'updatedAt'])
+        && d.uid == uid
+        && validPseudo(d.pseudo)
+        && d.createdAt is timestamp
+        && d.updatedAt == request.time;
     }
 
-    // Vérifie la forme complète du document et la cohérence du score
+    match /users/{uid} {
+      // Chaque joueur ne lit que son propre profil (le pseudo public est dans "scores")
+      allow get: if isOwner(uid);
+      allow list: if false;
+
+      // Création : son propre UID uniquement, et le pseudo doit être réservé
+      // à son nom dans la même transaction (pseudos/{pseudo en minuscules})
+      allow create: if isOwner(uid)
+        && validUser(request.resource.data, uid)
+        && request.resource.data.createdAt == request.time
+        && getAfter(pseudoPath(request.resource.data.pseudo.lower())).data.uid == uid;
+
+      // Modification du pseudo : même contrôle, ancien pseudo libéré dans la
+      // même transaction, 10 s minimum entre deux changements (anti-spam)
+      allow update: if isOwner(uid)
+        && validUser(request.resource.data, uid)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.pseudo != resource.data.pseudo
+        && request.time > resource.data.updatedAt + duration.value(10, 's')
+        && getAfter(pseudoPath(request.resource.data.pseudo.lower())).data.uid == uid
+        && (request.resource.data.pseudo.lower() == resource.data.pseudo.lower()
+            || !existsAfter(pseudoPath(resource.data.pseudo.lower())));
+
+      allow delete: if false;
+    }
+
+    // ---------- Réservations de pseudo (unicité) ----------
+    match /pseudos/{name} {
+      // Lecture publique d'un pseudo précis : vérifier s'il est libre
+      allow get: if true;
+      allow list: if false;
+
+      // Réserver : uniquement pour soi, uniquement le pseudo de son profil (même transaction)
+      // Un pseudo déjà pris ne peut pas être "créé" à nouveau (ce serait une mise à jour → refusée)
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && name.matches('^[a-z0-9_-]{3,15}$')
+        && getAfter(userPath(request.auth.uid)).data.pseudo.lower() == name;
+
+      // Libérer : uniquement son propre pseudo, et seulement en le remplaçant
+      allow delete: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && getAfter(userPath(request.auth.uid)).data.pseudo.lower() != name;
+
+      allow update: if false;
+    }
+
+    // ---------- Scores ----------
+    // Le pseudo d'un score doit être exactement celui du profil du joueur
     function validScore(d) {
       return d.keys().hasOnly(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
         && d.keys().hasAll(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
         && d.uid == request.auth.uid
         && validMode(d.mode)
         && validPseudo(d.pseudo)
+        && d.pseudo == get(userPath(request.auth.uid)).data.pseudo
         && d.score is int    && d.score > 0     && d.score <= 10000000
         && d.bitcoins is int && d.bitcoins >= 0 && d.bitcoins <= 100000
         && d.distance is int && d.distance >= 0 && d.distance <= 10000000
@@ -36,41 +110,35 @@ service cloud.firestore {
         // Plausibilité : le score ne peut pas dépasser ce que la distance
         // et les Bitcoins permettent d'obtenir (multiplicateur max ×3)
         && d.score <= 3 * (d.distance * 2 + d.bitcoins * 40) + 100
-        // Horodatage obligatoirement fourni par le serveur
         && d.createdAt == request.time;
     }
 
     match /scores/{scoreId} {
-
-      // Lecture publique d'un document
       allow get: if true;
 
       // Requêtes de liste : limite obligatoire (top 10 = 10, rang = 1000)
-      // → impossible d'aspirer toute la collection en une requête
       allow list: if request.query.limit <= 1000;
 
-      // Création : uniquement SON document, avec l'identifiant imposé
+      // Création : uniquement SON document, identifiant imposé "{uid}_{mode}"
       allow create: if signedIn()
         && scoreId == request.auth.uid + '_' + request.resource.data.mode
         && validScore(request.resource.data);
 
-      // Mise à jour : uniquement par son propriétaire, mode inchangé,
-      // 10 s minimum entre deux écritures (anti-spam), et :
-      //  - soit un score STRICTEMENT supérieur (seul le meilleur score est gardé)
-      //  - soit un simple changement de pseudo (score et stats intacts)
+      // Mise à jour par son propriétaire uniquement, mode inchangé, et :
+      //  - soit un score STRICTEMENT supérieur, 10 s minimum après le précédent
+      //  - soit la propagation d'un nouveau pseudo (score et stats intacts)
       allow update: if signedIn()
         && resource.data.uid == request.auth.uid
         && scoreId == request.auth.uid + '_' + resource.data.mode
         && request.resource.data.mode == resource.data.mode
         && validScore(request.resource.data)
-        && request.time > resource.data.createdAt + duration.value(10, 's')
         && (
-          request.resource.data.score > resource.data.score
+          (request.resource.data.score > resource.data.score
+            && request.time > resource.data.createdAt + duration.value(10, 's'))
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pseudo', 'createdAt'])
-              && request.resource.data.pseudo != resource.data.pseudo)
+            && request.resource.data.pseudo != resource.data.pseudo)
         );
 
-      // Personne ne peut supprimer un score depuis le jeu
       allow delete: if false;
     }
 

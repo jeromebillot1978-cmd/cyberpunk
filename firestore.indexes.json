@@ -4,17 +4,72 @@
       "collectionGroup": "scores",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "mode", "order": "ASCENDING" },
-        { "fieldPath": "score", "order": "DESCENDING" }
+        {
+          "fieldPath": "mode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "score",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
   "fieldOverrides": [
-    { "collectionGroup": "scores", "fieldPath": "pseudo",    "indexes": [] },
-    { "collectionGroup": "scores", "fieldPath": "bitcoins",  "indexes": [] },
-    { "collectionGroup": "scores", "fieldPath": "distance",  "indexes": [] },
-    { "collectionGroup": "scores", "fieldPath": "level",     "indexes": [] },
-    { "collectionGroup": "scores", "fieldPath": "createdAt", "indexes": [] },
-    { "collectionGroup": "scores", "fieldPath": "uid",       "indexes": [] }
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "pseudo",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "bitcoins",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "distance",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "level",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "createdAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "scores",
+      "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "pseudo",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "createdAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "updatedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "pseudos",
+      "fieldPath": "uid",
+      "indexes": []
+    }
   ]
 }

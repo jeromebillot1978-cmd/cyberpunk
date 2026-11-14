@@ -8,8 +8,12 @@ Jeu HTML/CSS/JS sans framework + classement mondial en temps réel (Firebase Aut
 sun-pilot-firebase/
 ├── index.html               ← le jeu (modifié : bouton 🏆 CLASSEMENT, fenêtre, envoi des scores)
 ├── js/
-│   ├── firebase-config.js   ← À REMPLIR avec la config de ton projet Firebase
-│   └── leaderboard.js       ← tout le code Firebase (auth, scores, top 10, rang)
+│   ├── firebase-config.js   ← configuration du projet Firebase (déjà remplie)
+│   ├── firebase.js          ← noyau partagé : App, App Check, Auth anonyme, Firestore
+│   ├── identity.js          ← pseudo obligatoire (création, unicité, modification)
+│   ├── leaderboard.js       ← classement mondial (scores, top 10, rang)
+│   ├── modal.js             ← fenêtres modales réutilisables (animations)
+│   └── main.js              ← point d'entrée des modules
 ├── firestore.rules          ← règles de sécurité
 ├── firestore.indexes.json   ← index composite + exemptions (réduction des coûts)
 ├── firebase.json            ← déploiement des règles/index + émulateurs
@@ -78,20 +82,26 @@ Vercel → projet → *Settings* → *Domains* → ajoute `sunpilot.jercat.fr`. 
 
 ## Modèle de données
 
-Collection `scores`, **un document par joueur et par mode**, identifiant `{uid}_{mode}` :
+**Pseudo obligatoire** : au premier lancement, le jeu reste verrouillé (bouton JOUER désactivé, clavier et tactile bloqués) tant que le joueur n'a pas créé un pseudo unique. Modifiable ensuite dans ⚙ Paramètres → « ✏ MODIFIER MON PSEUDO ».
 
 ```js
-{ uid: "firebase_uid", pseudo: "Joueur", score: 4520, mode: "beginner",
-  bitcoins: 245, distance: 3800, level: 12, createdAt: <timestamp serveur> }
+users/{uid}         { uid, pseudo: "JERCAT", createdAt, updatedAt }
+pseudos/{pseudo}    { uid }            // pseudo en minuscules : unicité insensible à la casse
+scores/{uid}_{mode} { uid, pseudo, score, mode, bitcoins, distance, level, createdAt }
 ```
 
-`createdAt` = date du record (mise à jour à chaque nouveau record ou changement de pseudo).
+- Pseudo : 3 à 15 caractères, `a-z A-Z 0-9 _ -` (espaces, accents, emoji, HTML refusés et retirés automatiquement à la saisie).
+- Création / modification en **une transaction** (profil + réservation du pseudo + libération de l'ancien) : deux joueurs ne peuvent jamais obtenir le même pseudo.
+- Le pseudo d'un score doit être celui du profil : les classements affichent toujours le pseudo officiel, mis à jour automatiquement après un changement.
 
 ## Sécurité (firestore.rules)
 
 | Protection | Comment |
 |---|---|
-| Pas de doublons | l'ID du document est imposé : `uid_mode` |
+| Pseudo unique | réservation `pseudos/{pseudo en minuscules}` créée dans la même transaction que le profil |
+| Pseudo valide côté serveur | 3 à 15 caractères `A-Z a-z 0-9 _ -`, vérifié par les règles |
+| Profils protégés | chaque joueur ne lit et ne modifie que `users/{son uid}`, impossible de créer un faux UID |
+| Pas de doublons de scores | l'ID du document est imposé : `uid_mode` |
 | Personne ne modifie le score d'un autre | `uid` doit être celui du joueur connecté, en création comme en mise à jour |
 | Seul le meilleur score est gardé | une mise à jour n'est acceptée que si `score` est **strictement supérieur** |
 | Anti-spam | 10 s minimum entre deux écritures d'un même document, horodatage imposé par le serveur |
@@ -100,7 +110,7 @@ Collection `scores`, **un document par joueur et par mode**, identifiant `{uid}_
 | Pas d'aspiration de la base | toute requête de liste doit avoir une limite ≤ 1000 |
 | Rien d'autre n'est accessible | tout le reste de la base est fermé, suppression interdite |
 
-Tests : `cd tests && npm install && npm run test:rules` (Java requis pour l'émulateur) → 28 tests.
+Tests : `cd tests && npm install && npm run test:rules` (Java requis pour l'émulateur) → 52 tests.
 
 > Limite honnête : dans un jeu 100 % navigateur, le score est calculé chez le joueur. Les règles bloquent les écritures incohérentes, App Check bloque les scripts hors de ton site, mais un tricheur très motivé peut toujours envoyer un score plausible. Pour une protection totale, il faudrait valider la partie côté serveur (Cloud Function qui rejoue la partie), ce qui est bien plus lourd.
 

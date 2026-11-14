@@ -45,7 +45,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hud-right div{font-size:12px;letter-spacing:2px;margin-bottom:4px;color:#d9c8ff}
 .hud-right b{color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
 
-#topbtns{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 16px);display:flex;gap:8px;z-index:6}
+#topbtns{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 16px);display:flex;gap:8px;z-index:8}
+/* Les paramètres passent au-dessus du menu, de la pause et du Game Over */
+#settings{z-index:7}
 .ib{width:44px;height:44px;border-radius:10px;border:1px solid rgba(0,240,255,.6);background:rgba(10,4,30,.65);
   color:#fff;font-size:17px;cursor:pointer;box-shadow:0 0 12px rgba(0,240,255,.35),inset 0 0 10px rgba(0,240,255,.15)}
 .ib:active{transform:scale(.94)}
@@ -134,28 +136,28 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
 .btnrow{display:flex;flex-direction:column;align-items:center}
 .goonline{margin-top:12px;min-height:18px;font-family:var(--fh);font-size:12px;letter-spacing:1px;color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
 .goonline b{color:var(--gold);text-shadow:0 0 8px var(--gold)}
-.lb{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:14px;
+.modal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:14px;
   padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
-.lb-backdrop{position:absolute;inset:0;background:rgba(3,0,10,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.lb-win{position:relative;width:100%;max-width:520px;max-height:100%;display:flex;flex-direction:column;overflow:hidden;
+.modal-backdrop{position:absolute;inset:0;background:rgba(3,0,10,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal-win{position:relative;width:100%;max-width:520px;max-height:100%;display:flex;flex-direction:column;overflow:hidden;
   border-radius:10px;padding:18px 18px 14px;background:linear-gradient(160deg,rgba(28,8,60,.96),rgba(7,2,20,.97));
   border:1px solid rgba(0,240,255,.7);
   box-shadow:0 0 24px rgba(0,240,255,.45),0 0 60px rgba(255,47,208,.3),inset 0 0 40px rgba(138,60,255,.18)}
-.lb-win::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:10px;
+.modal-win::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:10px;
   background:linear-gradient(90deg,var(--cyan),var(--pink)) top/100% 2px no-repeat,linear-gradient(90deg,var(--pink),var(--cyan)) bottom/100% 2px no-repeat;
   filter:drop-shadow(0 0 6px var(--pink))}
-.lb.open .lb-win{animation:lbIn .38s cubic-bezier(.2,1.3,.4,1) both}
-.lb.open .lb-backdrop{animation:lbFade .3s both}
-.lb.closing .lb-win{animation:lbOut .24s ease-in both}
-.lb.closing .lb-backdrop{animation:lbFade .24s reverse both}
+.modal.open .modal-win{animation:lbIn .38s cubic-bezier(.2,1.3,.4,1) both}
+.modal.open .modal-backdrop{animation:lbFade .3s both}
+.modal.closing .modal-win{animation:lbOut .24s ease-in both}
+.modal.closing .modal-backdrop{animation:lbFade .24s reverse both}
 @keyframes lbIn{0%{opacity:0;transform:scale(.82) translateY(24px);filter:hue-rotate(60deg) brightness(2)}60%{filter:none}100%{opacity:1;transform:none}}
 @keyframes lbOut{to{opacity:0;transform:scale(.9) translateY(14px);filter:brightness(2)}}
 @keyframes lbFade{from{opacity:0}to{opacity:1}}
-.lb-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.lb-kicker{font-family:var(--fh);font-size:11px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
-.lb-title{font-family:var(--fh);font-weight:900;font-size:clamp(19px,4.6vw,26px);letter-spacing:1px;margin-top:4px;color:#fff;
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.modal-kicker{font-family:var(--fh);font-size:11px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+.modal-title{font-family:var(--fh);font-weight:900;font-size:clamp(19px,4.6vw,26px);letter-spacing:1px;margin-top:4px;color:#fff;
   text-shadow:0 0 8px var(--pink),0 0 22px var(--pink)}
-.lb-x{flex:none;width:40px;height:40px;border-radius:8px;cursor:pointer;color:#fff;font-size:18px;background:rgba(255,47,208,.12);
+.modal-x{flex:none;width:40px;height:40px;border-radius:8px;cursor:pointer;color:#fff;font-size:18px;background:rgba(255,47,208,.12);
   border:1px solid var(--pink);box-shadow:0 0 12px rgba(255,47,208,.5)}
 .lb-tabs{display:flex;gap:6px;margin-top:14px}
 .lb-tab{flex:1;min-width:0;cursor:pointer;padding:9px 4px;border-radius:6px;font-family:var(--fh);font-size:11px;font-weight:900;letter-spacing:1px;
@@ -189,16 +191,38 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
 .lb-me{margin-top:8px;padding:10px 12px;border-radius:7px;font-family:var(--fh);font-size:12px;letter-spacing:1px;line-height:1.5;
   border:1px dashed rgba(255,47,208,.6);background:rgba(255,47,208,.07);color:#f3e9ff}
 .lb-me b{color:var(--cyan);text-shadow:0 0 8px var(--cyan);font-size:15px}
-.lb-pseudo{display:flex;gap:8px;align-items:center;margin-top:10px}
-.lb-pseudo label{font-family:var(--fh);font-size:10px;letter-spacing:2px;color:#a99ad0;white-space:nowrap}
-.lb-pseudo input{flex:1;min-width:0;padding:9px 10px;border-radius:6px;border:1px solid rgba(0,240,255,.5);background:rgba(0,0,0,.45);
-  color:#fff;font-family:var(--fb);font-weight:700;font-size:16px;outline:none;user-select:text;-webkit-user-select:text}
-.lb-pseudo input:focus{box-shadow:0 0 12px rgba(0,240,255,.6)}
-.lb-pseudo button{padding:9px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--fh);font-weight:900;color:#fff;
-  background:linear-gradient(90deg,var(--pink),var(--violet));box-shadow:0 0 12px rgba(255,47,208,.6)}
 .lb-msg{min-height:16px;margin-top:6px;font-size:13px;color:#a99ad0;text-align:center}
-@media (max-width:430px){ .lb-tab{font-size:10px;letter-spacing:0;padding:9px 2px} .lb-win{padding:14px 12px 12px} .lb-row{grid-template-columns:38px 1fr auto;padding:8px} }
-@media (max-height:560px){ .lb-win{padding:12px} .lb-tabs{margin-top:8px} .lb-row{padding:6px 10px} .lb-pseudo{display:none} }
+.lb-pilot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}
+.linkbtn{cursor:pointer;padding:7px 11px;border-radius:6px;font-family:var(--fh);font-size:11px;font-weight:900;letter-spacing:1px;color:var(--cyan);
+  background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.6);box-shadow:0 0 10px rgba(0,240,255,.3)}
+/* ---------- Identité du pilote ---------- */
+.pilot{display:inline-flex;align-items:center;gap:6px;font-family:var(--fh);font-weight:900;letter-spacing:1px;color:#fff;
+  text-shadow:0 0 8px var(--cyan),0 0 18px rgba(0,240,255,.6)}
+.pilot.menu{margin-top:10px;font-size:15px;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,240,255,.55);background:rgba(0,240,255,.07)}
+.pilot.hud{font-size:12px;margin-bottom:4px;color:#e9fdff}
+.pilot.go{margin-top:8px;font-size:14px}
+.idm-win{max-width:440px;text-align:left}
+.idm.mandatory .modal-win{border-color:var(--pink);box-shadow:0 0 26px rgba(255,47,208,.5),0 0 60px rgba(0,240,255,.3),inset 0 0 40px rgba(138,60,255,.18)}
+.idm-text{margin-top:10px;font-size:16px;line-height:1.35;color:#e6dcff}
+.idm-label{display:block;margin-top:16px;font-family:var(--fh);font-size:11px;letter-spacing:3px;color:var(--cyan)}
+.idm-field{display:flex;align-items:center;gap:10px;margin-top:6px;padding:4px 12px;border-radius:8px;border:1px solid rgba(0,240,255,.6);
+  background:rgba(0,0,0,.5);box-shadow:inset 0 0 14px rgba(0,240,255,.15)}
+.idm-field:focus-within{border-color:var(--pink);box-shadow:0 0 16px rgba(255,47,208,.55),inset 0 0 14px rgba(255,47,208,.15)}
+.idm-field input{flex:1;min-width:0;padding:11px 0;border:none;outline:none;background:transparent;color:#fff;
+  font-family:var(--fh);font-weight:900;font-size:19px;letter-spacing:2px;user-select:text;-webkit-user-select:text}
+.idm-field span{font-size:18px}
+#idmCount{font-family:var(--fh);font-size:11px;color:#a99ad0}
+.idm-rules{list-style:none;margin:10px 0 0;padding:0;font-size:14px;color:#a99ad0;line-height:1.5}
+.idm-rules li::before{content:"○ ";color:#7a6aa8}
+.idm-rules li.ok{color:#c9ffe0}
+.idm-rules li.ok::before{content:"✔ ";color:#39ff88}
+.idm-status{min-height:22px;margin-top:10px;font-weight:700;font-size:16px;color:#e6dcff}
+.idm-status.ok{color:#39ff88;text-shadow:0 0 8px rgba(57,255,136,.7)}
+.idm-status.err{color:#ff5a7a;text-shadow:0 0 8px rgba(255,42,74,.6)}
+.idm-win .btn{width:100%;margin-top:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.4);box-shadow:none}
+@media (max-width:430px){ .lb-tab{font-size:10px;letter-spacing:0;padding:9px 2px} .modal-win{padding:14px 12px 12px} .lb-row{grid-template-columns:38px 1fr auto;padding:8px} }
+@media (max-height:560px){ .modal-win{padding:12px} .lb-tabs{margin-top:8px} .lb-row{padding:6px 10px} }
 /* Écrans d'ordinateur peu hauts : on allège le menu */
 @media (max-height:820px) and (min-width:700px){ #menu .legend,#menu .small{display:none} #menu{padding-top:29vh} }
 /* Écrans paysage peu hauts (téléphone couché) */
@@ -219,6 +243,7 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
   <!-- HUD en jeu -->
   <div id="hud" class="hidden">
     <div>
+      <div class="pilot hud js-pilot hidden">👤 <span class="js-pseudo"></span></div>
       <div class="lbl">SCORE</div>
       <div id="score">0</div>
       <div class="coinrow">₿ <span id="coins">0</span> <span id="combo"></span></div>
@@ -249,10 +274,11 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
     <div class="panel">
       <div class="title">SUN PILOT</div>
       <div class="sub">NEON SKIES ₿</div>
+      <div class="pilot menu js-pilot hidden">👤 <span class="js-pseudo"></span></div>
       <div class="diffs" id="diffMenu"></div>
       <div class="ddesc" id="diffDescMenu"></div>
       <div class="best">RECORD <span id="bestMenuLabel"></span> : <b id="bestMenu">0</b></div>
-      <div class="btnrow"><button class="btn" id="btnPlay">▶ JOUER</button>
+      <div class="btnrow"><button class="btn" id="btnPlay" disabled>⏳ CONNEXION…</button>
       <button class="btn2" id="btnLeaderboard">🏆 CLASSEMENT</button></div>
       <div class="help">Maintiens <kbd>CLIC</kbd> <kbd>ESPACE</kbd> ou le doigt sur l'écran pour monter.<br>Relâche pour redescendre.</div>
       <div class="legend">
@@ -281,6 +307,9 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
       <div class="diffs" id="diffSettings"></div>
       <div class="ddesc" id="diffDescSettings"></div>
       <ul class="dfeat" id="diffFeatures"></ul>
+      <div class="sub" style="margin-top:16px">PILOTE</div>
+      <div class="pilot menu js-pilot hidden">👤 <span class="js-pseudo"></span></div>
+      <div><button class="btn2" id="btnEditPseudo">✏ MODIFIER MON PSEUDO</button></div>
       <div class="note">Le changement s'applique immédiatement, sans redémarrer.<br>Une partie est comptée dans le mode le plus facile utilisé.</div>
       <button class="btn" id="btnCloseSettings">✔ FERMER</button>
     </div>
@@ -292,6 +321,7 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
   <div id="over" class="screen hidden">
     <div class="panel">
       <div class="go-title">GAME OVER</div>
+      <div class="pilot go js-pilot hidden">👤 <span class="js-pseudo"></span></div>
       <div class="gomode" id="goMode"></div>
       <div id="recordBadge" class="hidden">🏆 NOUVEAU RECORD !</div>
       <div class="stats">
@@ -308,23 +338,44 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
   </div>
 
   <!-- Classement mondial (piloté par js/leaderboard.js) -->
-  <div id="lb" class="lb hidden" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
-    <div class="lb-backdrop" data-close></div>
-    <div class="lb-win">
-      <div class="lb-head">
-        <div><div class="lb-kicker">CLASSEMENT MONDIAL</div><div class="lb-title" id="lbTitle">🏆 TOP 10</div></div>
-        <button class="lb-x" data-close aria-label="Fermer">✕</button>
+  <div id="lb" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-win">
+      <div class="modal-head">
+        <div><div class="modal-kicker">CLASSEMENT MONDIAL</div><div class="modal-title" id="lbTitle">🏆 TOP 10</div></div>
+        <button class="modal-x" data-close aria-label="Fermer">✕</button>
       </div>
       <div class="lb-tabs" id="lbTabs" role="tablist"></div>
       <div class="lb-live" id="lbLive"><span class="dot"></span><span id="lbLiveTxt">CONNEXION…</span></div>
       <ol class="lb-list" id="lbList"></ol>
       <div class="lb-me" id="lbMe"></div>
-      <form class="lb-pseudo" id="lbPseudoForm" autocomplete="off">
-        <label for="lbPseudo">TON PSEUDO</label>
-        <input id="lbPseudo" maxlength="16" spellcheck="false" enterkeyhint="done">
-        <button type="submit">OK</button>
-      </form>
+      <div class="lb-pilot"><div class="pilot hud js-pilot hidden">👤 <span class="js-pseudo"></span></div>
+        <button type="button" class="linkbtn" id="lbEditPseudo">✏ MODIFIER</button></div>
       <div class="lb-msg" id="lbMsg"></div>
+    </div>
+  </div>
+
+  <!-- Identité du pilote : pseudo obligatoire (piloté par js/identity.js) -->
+  <div id="idm" class="modal idm hidden" role="dialog" aria-modal="true" aria-labelledby="idmTitle">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-win idm-win">
+      <div class="modal-head">
+        <div><div class="modal-kicker" id="idmKicker">BIENVENUE, PILOTE</div><div class="modal-title" id="idmTitle">👤 CHOISIS TON IDENTITÉ</div></div>
+        <button class="modal-x hidden" id="idmClose" type="button" aria-label="Fermer">✕</button>
+      </div>
+      <p class="idm-text" id="idmText"></p>
+      <form id="idmForm" autocomplete="off" novalidate>
+        <label class="idm-label" for="idmInput">Pseudo</label>
+        <div class="idm-field"><span aria-hidden="true">👤</span>
+          <input id="idmInput" name="pseudo" maxlength="15" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="JERCAT" aria-describedby="idmRules idmStatus">
+          <span id="idmCount">0/15</span></div>
+        <ul class="idm-rules" id="idmRules">
+          <li id="idmRuleLen">3 à 15 caractères</li>
+          <li id="idmRuleChars">Lettres, chiffres, _ et - (sans espace ni accent)</li>
+        </ul>
+        <div class="idm-status" id="idmStatus" role="status" aria-live="polite"></div>
+        <button class="btn" id="idmSubmit" type="submit" disabled>VALIDER</button>
+      </form>
     </div>
   </div>
 </div>
@@ -1278,12 +1329,20 @@ function closeSettings(){
   if(settingsResume){ settingsResume=false; resume(); }
 }
 const settingsOpen=()=>!$('settings').classList.contains('hidden');
-const lbOpen=()=>document.body.classList.contains('lb-open');
+// Une fenêtre modale (classement, identité) est ouverte : le jeu ignore clavier et tactile
+const modalOpen=()=>document.body.classList.contains('modal-open');
+// Pseudo obligatoire : aucune partie ne démarre sans identité validée par Firebase
+const hasPilot=()=>!!(window.SunPilotIdentity&&window.SunPilotIdentity.getPseudo());
 
 /* =========================================================
    CYCLE DE PARTIE
    ========================================================= */
 function startGame(){
+  if(!hasPilot()){
+    if(window.SunPilotIdentity) window.SunPilotIdentity.requirePseudo();
+    else showBanner(location.protocol==='file:'?'👤 JEU EN LIGNE UNIQUEMENT':'⏳ CONNEXION EN COURS…');
+    return;
+  }
   Sound.init(); Sound.startMusic();
   const d=D();
   state='play'; holding=false;
@@ -1692,7 +1751,7 @@ function updateHud(force){
    ENTRÉES : souris, tactile, clavier
    ========================================================= */
 window.addEventListener('pointerdown',e=>{
-  if(e.target.closest('button,input,.lb')||settingsOpen()||lbOpen()) return;
+  if(e.target.closest('button,input,.modal')||settingsOpen()||modalOpen()) return;
   if(state==='play'){ e.preventDefault(); press(); }
 },{passive:false});
 window.addEventListener('pointerup',release);
@@ -1701,7 +1760,7 @@ window.addEventListener('blur',release);
 window.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{
   if(e.target.matches&&e.target.matches('input,textarea')) return;   // saisie du pseudo
-  if(lbOpen()) return;                                               // le classement gère ses touches
+  if(modalOpen()) return;                                            // la fenêtre ouverte gère ses touches
   const k=e.code;
   // Touches 1, 2, 3… : choix direct de la difficulté (fonctionne aussi en jeu)
   const n=/^(Digit|Numpad)(\d)$/.exec(k);
@@ -1764,9 +1823,15 @@ function openLeaderboard(){
   else showBanner(location.protocol==='file:'?'🏆 CLASSEMENT : VERSION EN LIGNE':'🏆 CLASSEMENT INDISPONIBLE');
 }
 $('btnLeaderboard').addEventListener('click',openLeaderboard);
+// Modules Firebase introuvables (fichier ouvert en local, réseau coupé…) : le jeu reste verrouillé
+function spModuleFailed(){
+  const b=$('btnPlay'); b.disabled=true;
+  b.textContent=location.protocol==='file:'?'👤 JEU EN LIGNE UNIQUEMENT':'⚠ CONNEXION IMPOSSIBLE';
+}
+if(location.protocol==='file:') setTimeout(()=>{ if(!window.SunPilotIdentity) spModuleFailed(); },1500);
 $('btnLeaderboard2').addEventListener('click',openLeaderboard);
 </script>
-<!-- Classement mondial Firebase (module ES, chargé après le jeu) -->
-<script type="module" src="js/leaderboard.js"></script>
+<!-- Firebase : identité du pilote + classement mondial (modules ES) -->
+<script type="module" src="js/main.js" onerror="spModuleFailed()"></script>
 </body>
 </html>
