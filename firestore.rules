@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// =========================================================
+// RÈGLES FIRESTORE — Sun Pilot · Neon Skies
+// ---------------------------------------------------------
+// Collection "scores" : un document par joueur ET par mode,
+// identifiant imposé = "{uid}_{mode}"  → aucun doublon possible.
+// =========================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validMode(m) {
+      return m in ['beginner', 'intermediate', 'pro'];
+    }
+
+    // Même règle que côté jeu : 2 à 16 caractères, lettres (accents inclus), chiffres, espace . _ -
+    function validPseudo(p) {
+      return p is string && p.matches('^[A-Za-z0-9À-ÖØ-öø-ÿ _.-]{2,16}$');
+    }
+
+    // Vérifie la forme complète du document et la cohérence du score
+    function validScore(d) {
+      return d.keys().hasOnly(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
+        && d.keys().hasAll(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
+        && d.uid == request.auth.uid
+        && validMode(d.mode)
+        && validPseudo(d.pseudo)
+        && d.score is int    && d.score > 0     && d.score <= 10000000
+        && d.bitcoins is int && d.bitcoins >= 0 && d.bitcoins <= 100000
+        && d.distance is int && d.distance >= 0 && d.distance <= 10000000
+        && d.level is int    && d.level >= 1    && d.level <= 100000
+        // Plausibilité : le score ne peut pas dépasser ce que la distance
+        // et les Bitcoins permettent d'obtenir (multiplicateur max ×3)
+        && d.score <= 3 * (d.distance * 2 + d.bitcoins * 40) + 100
+        // Horodatage obligatoirement fourni par le serveur
+        && d.createdAt == request.time;
+    }
+
+    match /scores/{scoreId} {
+
+      // Lecture publique d'un document
+      allow get: if true;
+
+      // Requêtes de liste : limite obligatoire (top 10 = 10, rang = 1000)
+      // → impossible d'aspirer toute la collection en une requête
+      allow list: if request.query.limit <= 1000;
+
+      // Création : uniquement SON document, avec l'identifiant imposé
+      allow create: if signedIn()
+        && scoreId == request.auth.uid + '_' + request.resource.data.mode
+        && validScore(request.resource.data);
+
+      // Mise à jour : uniquement par son propriétaire, mode inchangé,
+      // 10 s minimum entre deux écritures (anti-spam), et :
+      //  - soit un score STRICTEMENT supérieur (seul le meilleur score est gardé)
+      //  - soit un simple changement de pseudo (score et stats intacts)
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && scoreId == request.auth.uid + '_' + resource.data.mode
+        && request.resource.data.mode == resource.data.mode
+        && validScore(request.resource.data)
+        && request.time > resource.data.createdAt + duration.value(10, 's')
+        && (
+          request.resource.data.score > resource.data.score
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pseudo', 'createdAt'])
+              && request.resource.data.pseudo != resource.data.pseudo)
+        );
+
+      // Personne ne peut supprimer un score depuis le jeu
+      allow delete: if false;
+    }
+
+    // Tout le reste de la base est fermé
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,8 @@
+firestore.rules
+firestore.indexes.json
+firebase.json
+.firebaserc
+README.md
+tests/
+node_modules/
+*.log
