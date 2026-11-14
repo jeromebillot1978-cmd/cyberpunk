@@ -305,4 +305,6 @@ window.addEventListener("sunpilot:gameover", async (e) => {
 });
 
 export const Leaderboard = { open, close, submitScore, getRank };
-window.SunPilotLB = Object.assign(Leaderboard, { get uid() { return myUid; } });
+// Getter réel (Object.assign figerait la valeur au chargement)
+Object.defineProperty(Leaderboard, "uid", { get: () => myUid, enumerable: true });
+window.SunPilotLB = Leaderboard;
