@@ -222,6 +222,9 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
 .idm-win .btn{width:100%;margin-top:12px}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.4);box-shadow:none}
 button.pilot{cursor:pointer;font-size:inherit}
+.hudrec{font-family:var(--fh);font-size:11px;letter-spacing:2px;color:#d9c8ff;margin-bottom:6px}
+.hudrec b{color:var(--gold);text-shadow:0 0 8px var(--gold)}
+.needpseudo{margin-top:10px;font-family:var(--fh);font-size:12px;letter-spacing:1px;color:#ffd400;text-shadow:0 0 8px rgba(255,212,0,.7);animation:pulse .9s infinite alternate}
 button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color:var(--pink);text-shadow:0 0 6px var(--pink);margin-left:4px}
 .lb-name em.here{background:var(--pink);color:#fff}
 .lb-row.here{outline:1px dashed rgba(255,47,208,.7);outline-offset:-1px}
@@ -265,6 +268,7 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
   <div id="hud" class="hidden">
     <div>
       <div class="pilot hud js-pilot hidden">👤 <span class="js-pseudo"></span></div>
+      <div class="hudrec js-pilot hidden">🏆 RECORD <b id="hudRecord">0</b></div>
       <div class="lbl">SCORE</div>
       <div id="score">0</div>
       <div class="coinrow">₿ <span id="coins">0</span> <span id="combo"></span></div>
@@ -301,6 +305,7 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <div class="best">RECORD <span id="bestMenuLabel"></span> : <b id="bestMenu">0</b></div>
       <div class="btnrow"><button class="btn" id="btnPlay" disabled>⏳ CONNEXION…</button>
       <button class="btn2" id="btnLeaderboard">🏆 CLASSEMENT</button></div>
+      <div class="needpseudo hidden" id="needPseudo" role="status">⚠ Choisissez un pseudo pour commencer.</div>
       <div class="help">Maintiens <kbd>CLIC</kbd> <kbd>ESPACE</kbd> ou le doigt sur l'écran pour monter.<br>Relâche pour redescendre.</div>
       <div class="legend">
         <span style="color:#00e5ff">🛡 Bouclier</span>
@@ -405,7 +410,7 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <form id="idmForm" autocomplete="off" novalidate>
         <label class="idm-label" for="idmInput">Pseudo</label>
         <div class="idm-field"><span aria-hidden="true">👤</span>
-          <input id="idmInput" name="pseudo" maxlength="15" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="JERCAT" aria-describedby="idmRules idmStatus">
+          <input id="idmInput" name="pseudo" maxlength="40" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="JERCAT" aria-describedby="idmRules idmStatus">
           <span id="idmCount">0/15</span></div>
         <ul class="idm-rules" id="idmRules">
           <li id="idmRuleLen">3 à 15 caractères</li>
@@ -1802,6 +1807,7 @@ function updateHud(force){
   setText('score',String(score)); setText('coins',String(coinsCount));
   setText('combo',combo>=5?'COMBO x'+Math.min(1+Math.floor(combo/5),4):'');
   setText('bestHud',String(Math.max(bests[creditedId()],score)));
+  setText('hudRecord',String(Math.max(bests[creditedId()],score)));
   setText('speedHud','x'+(speed/CFG.baseSpeed).toFixed(1)); setText('levelHud',String(level));
   for(const k of ['shield','magnet','turbo']){
     const el=$('pw-'+k), on=P[k]>0;

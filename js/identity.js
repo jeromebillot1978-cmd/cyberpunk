@@ -46,6 +46,7 @@ function setPseudo(p, uid, profileId = getActiveId()) {
   pseudo = p;
   updateProfile(profileId, { pseudo: p, ...(uid ? { uid } : {}) });
   if (uid) cache.set(profileId, { uid, pseudo: p });
+  try { if (p) localStorage.setItem("sp_player_name", p); else localStorage.removeItem("sp_player_name"); } catch (e) {}
   document.querySelectorAll(".js-pseudo").forEach((el) => { el.textContent = p || ""; });
   document.querySelectorAll(".js-pilot").forEach((el) => el.classList.toggle("hidden", !p));
   setPlayEnabled(!!p);
@@ -56,20 +57,41 @@ function setPlayEnabled(on, label) {
   const b = $("btnPlay"); if (!b) return;
   b.disabled = !on;
   b.textContent = on ? "▶ JOUER" : (label || "👤 PSEUDO REQUIS");
+  // « ⚠ Choisissez un pseudo pour commencer. » uniquement quand le pseudo manque vraiment
+  const warn = $("needPseudo"); if (warn) warn.classList.toggle("hidden", on || !!label);
 }
+/** Bouton JOUER bloqué tant qu'il n'y a pas de pseudo valide. */
+export function disablePlayButton() { setPlayEnabled(false); }
+/** Ouvre la fenêtre de pseudo obligatoire. */
+export function openPseudoModal(message = "") { openIdentity("create", message); }
 
 /* ---------- Fenêtre ---------- */
 function status(text, kind = "") {
   const s = $("idmStatus"); s.textContent = text; s.className = "idm-status" + (kind ? " " + kind : "");
 }
-function validate() {
+/**
+ * Valide et nettoie la saisie. Renvoie le message d'erreur à afficher ("" si rien à signaler) :
+ * espaces supprimés automatiquement, caractères interdits retirés et signalés, longueur contrôlée.
+ */
+function inputError() {
   const input = $("idmInput");
-  const cleaned = cleanPseudo(input.value);
-  if (cleaned !== input.value) {                   // nettoyage automatique de la saisie
-    const pos = Math.max(0, (input.selectionStart || cleaned.length) - (input.value.length - cleaned.length));
+  const raw = input.value;
+  const noSpaces = raw.replace(/\s+/g, "");                          // suppression des espaces inutiles
+  const allowed = noSpaces.normalize("NFKC").replace(/[^A-Za-z0-9_-]/g, "");
+  const cleaned = allowed.slice(0, PSEUDO_MAX);
+  if (cleaned !== raw) {                                             // nettoyage automatique de la saisie
+    const pos = Math.max(0, (input.selectionStart || cleaned.length) - (raw.length - cleaned.length));
     input.value = cleaned;
     try { input.setSelectionRange(pos, pos); } catch (e) {}
   }
+  if (allowed !== noSpaces) return "❌ Caractères non autorisés";
+  if (allowed.length > PSEUDO_MAX) return `❌ Maximum ${PSEUDO_MAX} caractères`;
+  if (cleaned.length > 0 && cleaned.length < PSEUDO_MIN) return "❌ Pseudo trop court";
+  return "";
+}
+
+function validate() {
+  const input = $("idmInput");
   const v = input.value;
   $("idmCount").textContent = `${v.length}/${PSEUDO_MAX}`;
   $("idmRuleLen").classList.toggle("ok", v.length >= PSEUDO_MIN && v.length <= PSEUDO_MAX);
@@ -145,7 +167,9 @@ async function claimPseudo(p, profileId) {
 
 async function submit(e) {
   e.preventDefault();
-  if (busy || !validate()) return;
+  if (busy) return;
+  const err = inputError();
+  if (!validate()) { status(err || ($("idmInput").value ? "❌ Pseudo invalide" : "❌ Pseudo trop court"), "err"); return; }
   const p = $("idmInput").value;
   const profileId = getActiveId();
   busy = true; validate(); status("⏳ Vérification de la disponibilité…");
@@ -175,14 +199,20 @@ async function verify(profileId) {
     const snap = await fs.getDoc(fs.doc(db, "users", user.uid));
     if (profileId !== getActiveId()) return;
     const p = snap.exists() ? snap.data().pseudo : null;
-    if (p && PSEUDO_RE.test(p)) setPseudo(p, user.uid, profileId);
-    else { cache.set(profileId, null); updateProfile(profileId, { pseudo: null, uid: user.uid }); pseudo = null; setPlayEnabled(false); openIdentity("create"); }
+    const playerName = p && PSEUDO_RE.test(p) ? p : null;
+    if (playerName) setPseudo(playerName, user.uid, profileId);
+    else { cache.set(profileId, null); updateProfile(profileId, { pseudo: null, uid: user.uid }); pseudo = null; }
+    // Vérification au démarrage : sans pseudo valide, fenêtre obligatoire et JOUER désactivé
+    if (!playerName) {
+      openPseudoModal();
+      disablePlayButton();
+    }
   } catch (err) {
     console.warn("[Identité] lecture du profil impossible :", err);
     if (profileId !== getActiveId()) return;
     // Hors ligne : on accepte uniquement un pseudo déjà validé par le serveur sur cet appareil
     if (cached && cached.pseudo && PSEUDO_RE.test(cached.pseudo)) setPseudo(cached.pseudo, null, profileId);
-    else { setPlayEnabled(false); openIdentity("create", errorMessage(err)); }
+    else { openPseudoModal(errorMessage(err)); disablePlayButton(); }
   }
 }
 
@@ -219,7 +249,14 @@ export async function removePlayer(id) {
 
 /* ---------- Événements ---------- */
 $("idmForm").addEventListener("submit", submit);
-$("idmInput").addEventListener("input", () => { validate(); if (!busy) status(""); });
+let charErrUntil = 0;   // le message « caractères non autorisés » reste lisible 2,5 s
+$("idmInput").addEventListener("input", () => {
+  let err = inputError();
+  if (err.includes("non autorisés")) charErrUntil = Date.now() + 2500;
+  else if (!err && Date.now() < charErrUntil) err = "❌ Caractères non autorisés";
+  validate();
+  if (!busy) status(err, err ? "err" : "");
+});
 $("idmClose").addEventListener("click", closeIdentity);
 $("idm").addEventListener("click", (e) => { if (e.target.closest("[data-close]") && mode !== "create") closeIdentity(); });
 window.addEventListener("keydown", (e) => {
