@@ -14,6 +14,7 @@
    ========================================================= */
 import { getFirebase, CONFIGURED, errorMessage } from "./firebase.js";
 import { getPseudo, onPseudoChange, openIdentity } from "./identity.js";
+import { getActiveId, getProfile, profileKey, localUids } from "./profiles.js";
 import { openModal, closeModal, isModalOpen } from "./modal.js";
 
 const COLL = "scores";
@@ -35,8 +36,12 @@ const session = {
 };
 
 /* ---------- État ---------- */
-let onlineBests = store.get("sp_online_best", {});   // meilleur score EN LIGNE par mode
+// Données propres à chaque pilote de l'appareil (clés de stockage séparées)
+const pget = (base, pid, d) => store.get(profileKey(base, pid), d);
+const pset = (base, pid, v) => store.set(profileKey(base, pid), v);
+const onlineBestsOf = (pid) => pget("sp_online_best", pid, {});   // meilleur score EN LIGNE par mode
 let myUid = null;
+
 let unsub = null, currentTab = null;
 const lastRows = {};
 
@@ -46,34 +51,36 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const modeInfo = (id) => SP.DIFFICULTIES[id] || SP.DIFF_LIST[0];
 const isOpen = () => isModalOpen($("lb"));
 
-async function fb() {
-  const f = await getFirebase();
-  myUid = f.user.uid;
+async function fb(pid = getActiveId()) {
+  const f = await getFirebase(pid);
+  if (pid === getActiveId()) myUid = f.user.uid;
   return f;
 }
 
 /* =========================================================
    ENREGISTREMENT DU SCORE (fin de partie)
    ========================================================= */
-async function submitScore({ score, mode, bitcoins, distance, level }) {
+async function submitScore({ score, mode, bitcoins, distance, level, profileId }) {
+  const pid = profileId || getActiveId();   // le pilote de la partie, même s'il change pendant l'envoi
   if (!CONFIGURED) return { status: "disabled" };
   score = Math.floor(score); if (!(score > 0)) return { status: "zero" };
   if (!SP.DIFFICULTIES[mode]) return { status: "error" };
-  const pseudo = getPseudo();
+  const pseudo = pid === getActiveId() ? getPseudo() : (getProfile(pid) || {}).pseudo;
   if (!pseudo) return { status: "noPseudo" };
-  const { user, db, fs } = await fb();
+  const { user, db, fs } = await fb(pid);
+  const onlineBests = onlineBestsOf(pid);
   const ref = fs.doc(db, COLL, `${user.uid}_${mode}`);
 
   // Record en ligne inconnu (1re fois sur ce mode) → 1 seule lecture, ensuite tout est en cache
   if (onlineBests[mode] === undefined) {
     try { const snap = await fs.getDoc(ref); onlineBests[mode] = snap.exists() ? snap.data().score : 0; }
     catch (e) { onlineBests[mode] = 0; }
-    store.set("sp_online_best", onlineBests);
+    pset("sp_online_best", pid, onlineBests);
   }
   if (score <= onlineBests[mode]) return { status: "notBetter", best: onlineBests[mode] };
 
   // Anti-spam des règles : 10 s minimum entre deux records sur le même mode
-  const lastW = store.get("sp_last_write", {});
+  const lastW = pget("sp_last_write", pid, {});
   const wait = (lastW[mode] || 0) + MIN_WRITE_GAP - Date.now();
   if (wait > 0) await sleep(wait);
 
@@ -87,18 +94,18 @@ async function submitScore({ score, mode, bitcoins, distance, level }) {
   try {
     const write = fs.setDoc(ref, payload);
     const res = await Promise.race([write.then(() => "ok"), sleep(8000).then(() => "pending")]);
-    lastW[mode] = Date.now(); store.set("sp_last_write", lastW);
-    onlineBests[mode] = score; store.set("sp_online_best", onlineBests);
-    const written = store.get("sp_scores_pseudo", {}); written[mode] = pseudo; store.set("sp_scores_pseudo", written);
-    session.set("sp_rank_" + mode, null);
+    lastW[mode] = Date.now(); pset("sp_last_write", pid, lastW);
+    onlineBests[mode] = score; pset("sp_online_best", pid, onlineBests);
+    const written = pget("sp_scores_pseudo", pid, {}); written[mode] = pseudo; pset("sp_scores_pseudo", pid, written);
+    session.set(profileKey("sp_rank_" + mode, pid), null);
     if (res === "pending") return { status: "pending" };
     let rank = null;   // un échec du calcul du rang ne doit pas masquer l'enregistrement
-    try { rank = await getRank(mode, score, true); } catch (e) { console.warn("[Classement] rang indisponible :", e); }
+    try { rank = await getRank(mode, score, true, pid); } catch (e) { console.warn("[Classement] rang indisponible :", e); }
     return { status: "ok", best: score, rank };
   } catch (e) {
     console.warn("[Classement] écriture refusée :", e);
     if (e && e.code === "permission-denied") {
-      try { const snap = await fs.getDoc(ref); if (snap.exists()) { onlineBests[mode] = snap.data().score; store.set("sp_online_best", onlineBests); } } catch (_) {}
+      try { const snap = await fs.getDoc(ref); if (snap.exists()) { onlineBests[mode] = snap.data().score; pset("sp_online_best", pid, onlineBests); } } catch (_) {}
     }
     return { status: "error", message: errorMessage(e) };
   }
@@ -107,9 +114,9 @@ async function submitScore({ score, mode, bitcoins, distance, level }) {
 /* =========================================================
    RANG MONDIAL : count() des scores strictement supérieurs
    ========================================================= */
-async function getRank(mode, score, force = false) {
+async function getRank(mode, score, force = false, pid = getActiveId()) {
   if (!score) return null;
-  const key = "sp_rank_" + mode;
+  const key = profileKey("sp_rank_" + mode, pid);
   const c = session.get(key, null);
   if (!force && c && c.score === score && Date.now() - c.t < RANK_TTL) return c.rank;
   const { db, fs } = await fb();
@@ -125,13 +132,14 @@ const rankText = (r) => (r ? (r.capped ? `#${RANK_LIMIT}+` : `#${fmt(r.pos)}`) :
    PSEUDO : propagation automatique vers les records existants
    ========================================================= */
 // Le pseudo écrit dans chaque score est mémorisé par mode : aucune lecture ni écriture inutile au chargement
-async function syncPseudoToScores(pseudo) {
+async function syncPseudoToScores(pseudo, pid = getActiveId()) {
   if (!CONFIGURED || !pseudo) return;
-  const written = store.get("sp_scores_pseudo", {});
+  const onlineBests = onlineBestsOf(pid);
+  const written = pget("sp_scores_pseudo", pid, {});
   const modes = Object.keys(onlineBests).filter((m) => onlineBests[m] > 0 && written[m] !== pseudo);
   if (!modes.length) return;
   try {
-    const { user, db, fs } = await fb();
+    const { user, db, fs } = await fb(pid);
     await Promise.all(modes.map((m) =>
       fs.updateDoc(fs.doc(db, COLL, `${user.uid}_${m}`), { pseudo, createdAt: fs.serverTimestamp() })
         .then(() => { written[m] = pseudo; })
@@ -140,11 +148,13 @@ async function syncPseudoToScores(pseudo) {
           if (e.code === "permission-denied" || e.code === "not-found") written[m] = pseudo;
           else console.warn("[Classement] pseudo non propagé sur", m, e.code || e);
         })));
-    store.set("sp_scores_pseudo", written);
+    pset("sp_scores_pseudo", pid, written);
   } catch (e) { console.warn("[Classement] propagation du pseudo impossible :", e); }
 }
-onPseudoChange((p) => {
-  syncPseudoToScores(p);
+onPseudoChange((p, pid) => {
+  myUid = null;                                   // nouveau pilote actif : son UID arrive juste après
+  fb(pid).then(() => { if (isOpen()) { renderRows(currentTab, lastRows[currentTab] || []); renderMe(currentTab); } }).catch(() => {});
+  syncPseudoToScores(p, pid);
   if (isOpen()) renderMe(currentTab);
 });
 
@@ -180,15 +190,17 @@ function renderRows(mode, rows) {
     ol.appendChild(li); return;
   }
   const medals = ["🥇", "🥈", "🥉"];
+  const local = localUids();
   rows.forEach((r, i) => {
     const me = myUid && r.uid === myUid;
+    const here = !me && local.includes(r.uid);    // autre pilote de cet appareil
     const li = document.createElement("li");
-    li.className = "lb-row" + (i < 3 ? ` r${i + 1}` : "") + (me ? " me" : "");
+    li.className = "lb-row" + (i < 3 ? ` r${i + 1}` : "") + (me ? " me" : "") + (here ? " here" : "");
     li.style.animationDelay = `${i * 35}ms`;
     const rk = document.createElement("span"); rk.className = "lb-rank"; rk.textContent = i < 3 ? medals[i] : `#${i + 1}`;
     const who = document.createElement("span"); who.className = "lb-who";
     const nm = document.createElement("span"); nm.className = "lb-name"; nm.textContent = `👤 ${r.pseudo || "Pilote"}`;
-    if (me) { const em = document.createElement("em"); em.textContent = "TOI"; nm.appendChild(em); }
+    if (me || here) { const em = document.createElement("em"); em.textContent = me ? "TOI" : "ICI"; if (here) em.className = "here"; nm.appendChild(em); }
     const st = document.createElement("span"); st.className = "lb-stats";
     st.textContent = `₿ ${fmt(r.bitcoins)} · ${fmt(r.distance)} m · niv. ${fmt(r.level)}`;
     who.append(nm, st);
@@ -201,7 +213,7 @@ async function renderMe(mode) {
   const box = $("lbMe");
   const d = modeInfo(mode);
   const local = SP.getLocalBests()[mode] || 0;
-  const online = onlineBests[mode] || 0;
+  const online = onlineBestsOf(getActiveId())[mode] || 0;
   const line = (label, value) => { box.append(label); const b = document.createElement("b"); b.textContent = value; box.append(b); };
   box.innerHTML = "";
   if (!CONFIGURED) { line(`🌍 Classement non configuré. Ton record local en ${d.label} : `, fmt(local)); return; }

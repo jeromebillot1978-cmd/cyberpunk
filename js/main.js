@@ -1,3 +1,4 @@
-/* Point d'entrée Firebase du jeu : identité obligatoire puis classement mondial. */
+/* Point d'entrée Firebase du jeu : pilotes et identité, puis classement mondial. */
 import "./identity.js";
+import "./pilots.js";
 import "./leaderboard.js";

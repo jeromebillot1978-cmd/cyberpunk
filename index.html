@@ -221,6 +221,27 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
 .idm-status.err{color:#ff5a7a;text-shadow:0 0 8px rgba(255,42,74,.6)}
 .idm-win .btn{width:100%;margin-top:12px}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.4);box-shadow:none}
+button.pilot{cursor:pointer;font-size:inherit}
+button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color:var(--pink);text-shadow:0 0 6px var(--pink);margin-left:4px}
+.lb-name em.here{background:var(--pink);color:#fff}
+.lb-row.here{outline:1px dashed rgba(255,47,208,.7);outline-offset:-1px}
+/* ---------- Choix du pilote (appareil partagé) ---------- */
+.pl-win{max-width:460px}
+.pl-hint{margin-top:8px;font-size:15px;line-height:1.35;color:#e6dcff}
+.pl-list{list-style:none;margin:14px 0 0;padding:2px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.pl-card{display:flex;align-items:stretch;gap:6px;border-radius:8px;border:1px solid rgba(0,240,255,.35);background:rgba(255,255,255,.04);animation:rowIn .3s both}
+.pl-card.on{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,240,255,.45),inset 0 0 14px rgba(0,240,255,.12)}
+.pl-pick{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:11px 12px;cursor:pointer;
+  background:none;border:none;color:#fff;text-align:left;border-radius:8px}
+.pl-pick:hover{background:rgba(255,47,208,.1)}
+.pl-name{font-family:var(--fh);font-weight:900;font-size:16px;letter-spacing:1px;text-shadow:0 0 8px var(--cyan);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-name em{font-style:normal;font-size:9px;margin-left:8px;padding:2px 6px;border-radius:3px;background:var(--cyan);color:#05010c;vertical-align:2px;text-shadow:none}
+.pl-rec{font-size:13px;color:#a99ad0}
+.pl-icon{flex:none;width:44px;border:none;border-left:1px solid rgba(255,255,255,.08);background:none;color:#fff;font-size:17px;cursor:pointer}
+.pl-icon:hover{background:rgba(0,240,255,.1)}
+.pl-icon.del.confirm{background:rgba(255,42,74,.25);color:#ffd0d8;font-family:var(--fh);font-size:12px;font-weight:900}
+.pl-win .btn2{width:100%;margin-top:12px}
+.pl-win .btn2:disabled{opacity:.45;cursor:not-allowed}
 @media (max-width:430px){ .lb-tab{font-size:10px;letter-spacing:0;padding:9px 2px} .modal-win{padding:14px 12px 12px} .lb-row{grid-template-columns:38px 1fr auto;padding:8px} }
 @media (max-height:560px){ .modal-win{padding:12px} .lb-tabs{margin-top:8px} .lb-row{padding:6px 10px} }
 /* Écrans d'ordinateur peu hauts : on allège le menu */
@@ -274,7 +295,7 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
     <div class="panel">
       <div class="title">SUN PILOT</div>
       <div class="sub">NEON SKIES ₿</div>
-      <div class="pilot menu js-pilot hidden">👤 <span class="js-pseudo"></span></div>
+      <button type="button" class="pilot menu js-pilot hidden" id="btnPilots" title="Changer de joueur">👤 <span class="js-pseudo"></span> <small>👥 CHANGER</small></button>
       <div class="diffs" id="diffMenu"></div>
       <div class="ddesc" id="diffDescMenu"></div>
       <div class="best">RECORD <span id="bestMenuLabel"></span> : <b id="bestMenu">0</b></div>
@@ -309,7 +330,8 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
       <ul class="dfeat" id="diffFeatures"></ul>
       <div class="sub" style="margin-top:16px">PILOTE</div>
       <div class="pilot menu js-pilot hidden">👤 <span class="js-pseudo"></span></div>
-      <div><button class="btn2" id="btnEditPseudo">✏ MODIFIER MON PSEUDO</button></div>
+      <div class="btnrow"><button class="btn2" id="btnEditPseudo">✏ MODIFIER MON PSEUDO</button>
+      <button class="btn2" id="btnManagePilots">👥 GÉRER LES JOUEURS</button></div>
       <div class="note">Le changement s'applique immédiatement, sans redémarrer.<br>Une partie est comptée dans le mode le plus facile utilisé.</div>
       <button class="btn" id="btnCloseSettings">✔ FERMER</button>
     </div>
@@ -332,6 +354,7 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
       </div>
       <div class="goonline" id="goOnline"></div>
       <div class="btnrow"><button class="btn" id="btnReplay">↻ REJOUER</button>
+      <button class="btn2" id="btnNextPilot">👥 JOUEUR SUIVANT</button>
       <button class="btn2" id="btnLeaderboard2">🏆 CLASSEMENT</button></div>
       <div class="small">ou appuie sur Espace</div>
     </div>
@@ -352,6 +375,21 @@ body.diff-beginner #fx{background:repeating-linear-gradient(0deg,rgba(255,255,25
       <div class="lb-pilot"><div class="pilot hud js-pilot hidden">👤 <span class="js-pseudo"></span></div>
         <button type="button" class="linkbtn" id="lbEditPseudo">✏ MODIFIER</button></div>
       <div class="lb-msg" id="lbMsg"></div>
+    </div>
+  </div>
+
+  <!-- Choix du pilote sur un appareil partagé (piloté par js/pilots.js) -->
+  <div id="pilots" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="plTitle">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-win pl-win">
+      <div class="modal-head">
+        <div><div class="modal-kicker">APPAREIL PARTAGÉ</div><div class="modal-title" id="plTitle">👥 QUI PILOTE ?</div></div>
+        <button class="modal-x" data-close type="button" aria-label="Fermer">✕</button>
+      </div>
+      <p class="pl-hint" id="plHint"></p>
+      <ol class="pl-list" id="plList"></ol>
+      <button class="btn2" id="plAdd" type="button">➕ NOUVEAU JOUEUR</button>
+      <div class="lb-msg" id="plMsg"></div>
     </div>
   </div>
 
@@ -517,9 +555,17 @@ let diffId = DIFFICULTIES[store.get('sp_diff','')] ? store.get('sp_diff','') : '
 const D = ()=>DIFFICULTIES[diffId];
 
 // Records séparés par difficulté (l'ancien record unique est repris en Intermédiaire)
+// Pilote actif (appareil partagé) : chaque joueur a ses propres records locaux
+let pilotId = (()=>{ try{ return JSON.parse(localStorage.getItem('sp_active_profile'))||'p0'; }catch(e){ return 'p0'; } })();
+let pilotName = '';
+const bestKey=(mode,pid=pilotId)=>pid==='p0'?'sp_best_'+mode:'sp_best_'+mode+'__'+pid;
 const bests = {};
-for(const d of DIFF_LIST) bests[d.id] = parseInt(store.get('sp_best_'+d.id,'0'),10)||0;
-if(!store.get('sp_best_intermediate',null) && store.get('sp_best',null)) bests.intermediate = parseInt(store.get('sp_best','0'),10)||0;
+function loadBests(){
+  for(const d of DIFF_LIST) bests[d.id] = parseInt(store.get(bestKey(d.id),'0'),10)||0;
+  // Ancien record unique (avant les modes de difficulté) : pilote d'origine uniquement
+  if(pilotId==='p0' && !store.get('sp_best_intermediate',null) && store.get('sp_best',null)) bests.intermediate = parseInt(store.get('sp_best','0'),10)||0;
+}
+loadBests();
 // Astuces déjà vues (mode Intermédiaire : une seule fois)
 let seenTips = {}; try{ seenTips = JSON.parse(store.get('sp_tips','{}'))||{}; }catch(e){ seenTips={}; }
 
@@ -1378,7 +1424,7 @@ function gameOver(){
   state='over';
   const cid=creditedId(), cd=DIFFICULTIES[cid];
   newRecord=score>bests[cid];
-  if(newRecord){ bests[cid]=score; store.set('sp_best_'+cid,String(score)); Sound.record(); fwTimer=0.2; fwCount=0; }
+  if(newRecord){ bests[cid]=score; store.set(bestKey(cid),String(score)); Sound.record(); fwTimer=0.2; fwCount=0; }
   else Sound.gameOver();
   $('goScore').textContent=score; $('goBest').textContent=bests[cid]; $('goCoins').textContent=coinsCount;
   $('goDist').textContent=Math.round(runDist/10)+' m';
@@ -1388,7 +1434,7 @@ function gameOver(){
   // Envoi au classement mondial (js/leaderboard.js écoute cet événement)
   $('goOnline').textContent='';
   window.dispatchEvent(new CustomEvent('sunpilot:gameover',{detail:{
-    score, mode:cid, bitcoins:coinsCount, distance:Math.round(runDist/10), level, newLocalRecord:newRecord }}));
+    score, mode:cid, bitcoins:coinsCount, distance:Math.round(runDist/10), level, newLocalRecord:newRecord, profileId:pilotId }}));
   runMinOrder=D().order; renderDiffUI();
   canRestart=false; setTimeout(()=>canRestart=true,650);
 }
@@ -1660,6 +1706,24 @@ function drawAids(){
   }
 }
 
+/* Étiquette néon avec le pseudo du pilote, au-dessus de la montgolfière */
+function drawPilotTag(x,y,alpha){
+  if(!pilotName) return;
+  ctx.save();
+  ctx.font='900 13px Orbitron, "Segoe UI", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const label='👤 '+pilotName, w=ctx.measureText(label).width+18, h=22;
+  const tx=clamp(x,w/2+6,W-w/2-6), ty=Math.max(y,h/2+4);
+  ctx.globalAlpha=alpha*0.9;
+  ctx.fillStyle='rgba(8,3,22,.72)'; rr(ctx,tx-w/2,ty-h/2,w,h,h/2); ctx.fill();
+  ctx.strokeStyle='#00f0ff'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=alpha*0.35;
+  ctx.drawImage(glow('#00f0ff'),tx-w/2-10,ty-h,w+20,h*2);
+  ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=alpha;
+  ctx.fillStyle='#fff'; ctx.shadowColor='#ff2fd0'; ctx.shadowBlur=8;
+  ctx.fillText(label,tx,ty+1);
+  ctx.restore();
+}
+
 function render(){
   ctx.setTransform(DPR*SCALE,0,0,DPR*SCALE,0,0);
   ctx.fillStyle='#05010c'; ctx.fillRect(-60,-60,W+120,H+120);
@@ -1696,6 +1760,7 @@ function render(){
     if(state!=='dying') drawPlayerFx();
     const a=(P.invuln>0&&P.turbo<=0&&Math.sin(time*30)<0)?0.4:1;
     drawHero(P.x,P.y,PS,state==='dying'?P.rot:P.tilt+Math.sin(time*1.5)*0.03,time,P.flame>0||P.turbo>0,a);
+    if(state!=='dying') drawPilotTag(P.x,P.y-62*PS-16,a);
   }
 
   // particules (confettis normaux, puis lumières additives)
@@ -1771,7 +1836,7 @@ window.addEventListener('keydown',e=>{
   if(k==='Space'||k==='ArrowUp'||k==='KeyW'||k==='Enter'){
     e.preventDefault(); if(e.repeat) return;
     if(state==='play') press();
-    else if(state==='menu') startGame();
+    else if(state==='menu') playPressed();
     else if(state==='over'&&canRestart) startGame();
     else if(state==='paused') resume();
   } else if(k==='KeyP'||k==='Escape'){ state==='play'?pause():resume(); }
@@ -1783,8 +1848,32 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) pause(); 
 function toggleMute(){ Sound.init(); const m=Sound.toggleMute(); $('btnMute').textContent=m?'🔇':'🔊'; }
 $('btnMute').textContent=Sound.isMuted()?'🔇':'🔊';
 $('btnMute').addEventListener('click',toggleMute);
-$('btnPlay').addEventListener('click',startGame);
+$('btnPlay').addEventListener('click',playPressed);
 $('btnReplay').addEventListener('click',()=>{ if(canRestart) startGame(); });
+// Plusieurs joueurs sur l'appareil : on demande « qui pilote ? » avant de décoller
+function playPressed(){
+  if(window.SunPilotPilots && window.SunPilotPilots.count()>1){ Sound.init(); window.SunPilotPilots.open('play',startGame); }
+  else startGame();
+}
+function openPilots(purpose,cb){
+  Sound.init();
+  if(window.SunPilotPilots) window.SunPilotPilots.open(purpose,cb);
+  else showBanner(location.protocol==='file:'?'👤 JEU EN LIGNE UNIQUEMENT':'⏳ CONNEXION EN COURS…');
+}
+$('btnNextPilot').addEventListener('click',()=>{ if(canRestart) openPilots('play',startGame); });
+$('btnPilots').addEventListener('click',()=>openPilots('manage'));
+$('btnManagePilots').addEventListener('click',()=>{
+  // Pas de changement de pilote pendant une partie en cours
+  if(state==='play'||state==='paused'||state==='dying'){ showBanner('👥 TERMINE LA PARTIE D\'ABORD'); return; }
+  closeSettings(); openPilots('manage');
+});
+// Changement de pilote : ses records et son pseudo remplacent ceux du précédent
+window.addEventListener('sunpilot:identity',e=>{
+  const d=e.detail||{};
+  if(d.profileId && d.profileId!==pilotId){ pilotId=d.profileId; loadBests(); }
+  pilotName=d.pseudo||'';
+  renderDiffUI(); hudCache.bestHud=null; updateHud(true);
+});
 $('btnPause').addEventListener('click',()=>state==='play'?pause():resume());
 $('btnResume').addEventListener('click',resume);
 $('btnSettings').addEventListener('click',()=>settingsOpen()?closeSettings():openSettings());

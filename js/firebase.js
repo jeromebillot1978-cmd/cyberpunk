@@ -1,42 +1,49 @@
 /* =========================================================
    NOYAU FIREBASE PARTAGÉ — Sun Pilot · Neon Skies
    ---------------------------------------------------------
-   Une seule initialisation pour tout le jeu (identité +
-   classement) : App, App Check, Auth anonyme, Firestore.
+   Une initialisation par pilote local (identité + classement) :
+   App, App Check, Auth anonyme, Firestore.
    ========================================================= */
 import { FIREBASE_CONFIG, LB_OPTIONS } from "./firebase-config.js";
+import { getActiveId } from "./profiles.js";
 
 const CDN = `https://www.gstatic.com/firebasejs/${LB_OPTIONS.sdkVersion}`;
 export const EMU = !!LB_OPTIONS.useEmulators;
 const CONFIG = EMU ? { apiKey: "demo-key", projectId: "demo-sunpilot", appId: "demo" } : FIREBASE_CONFIG;
 export const CONFIGURED = EMU || (!!CONFIG.apiKey && !/^VOTRE/.test(CONFIG.apiKey));
 
-let readyP = null;
+const ready = new Map();   // une connexion par pilote local
 
 /**
- * Initialise Firebase une seule fois et renvoie { app, auth, user, db, fs }.
- * L'UID anonyme est conservé par le navigateur : le joueur garde son identité
- * d'une visite à l'autre.
+ * Initialise (une seule fois par pilote) et renvoie { app, auth, user, db, fs }.
+ * Pilote "p0" = application Firebase par défaut ; les autres pilotes du même
+ * appareil ont chacun leur application nommée, donc leur propre compte anonyme
+ * (UID distinct, conservé par le navigateur d'une visite à l'autre).
  */
-export function getFirebase() {
+export function getFirebase(profileId = getActiveId()) {
   if (!CONFIGURED) return Promise.reject(Object.assign(new Error("Firebase non configuré"), { code: "not-configured" }));
-  if (readyP) return readyP;
-  readyP = (async () => {
+  if (ready.has(profileId)) return ready.get(profileId);
+  const p = (async () => {
     const [appMod, authMod, fs] = await Promise.all([
       import(`${CDN}/firebase-app.js`),
       import(`${CDN}/firebase-auth.js`),
       import(`${CDN}/firebase-firestore.js`),
     ]);
-    const app = appMod.initializeApp(CONFIG);
+    const isMain = profileId === "p0";
+    const name = isMain ? "[DEFAULT]" : `pilot-${profileId}`;
+    const existing = appMod.getApps().find((a) => a.name === name);
+    const app = existing || (isMain ? appMod.initializeApp(CONFIG) : appMod.initializeApp(CONFIG, name));
 
     // App Check (reCAPTCHA Fraud Defense) : prouve que les requêtes viennent du site officiel
-    if (LB_OPTIONS.appCheckSiteKey && !EMU) {
-      const ac = await import(`${CDN}/firebase-app-check.js`);
-      ac.initializeAppCheck(app, { provider: new ac.ReCaptchaEnterpriseProvider(LB_OPTIONS.appCheckSiteKey), isTokenAutoRefreshEnabled: true });
+    if (LB_OPTIONS.appCheckSiteKey && !EMU && !existing) {
+      try {
+        const ac = await import(`${CDN}/firebase-app-check.js`);
+        ac.initializeAppCheck(app, { provider: new ac.ReCaptchaEnterpriseProvider(LB_OPTIONS.appCheckSiteKey), isTokenAutoRefreshEnabled: true });
+      } catch (e) { console.warn("[Firebase] App Check :", e); }
     }
 
     const auth = authMod.getAuth(app);
-    if (EMU) authMod.connectAuthEmulator(auth, `http://${LB_OPTIONS.emulatorHost}:9099`, { disableWarnings: true });
+    if (EMU && !existing) authMod.connectAuthEmulator(auth, `http://${LB_OPTIONS.emulatorHost}:9099`, { disableWarnings: true });
     const user = await new Promise((resolve, reject) => {
       const off = authMod.onAuthStateChanged(auth, (u) => {
         if (u) { off(); resolve(u); }
@@ -44,18 +51,22 @@ export function getFirebase() {
       });
     });
 
-    // Cache local persistant : lectures réduites, affichage instantané, tolérance hors ligne
+    // Pilote principal : cache local persistant (lectures réduites, hors ligne).
+    // Pilotes supplémentaires : cache mémoire, plus léger.
     let db;
     try {
-      db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) });
+      db = fs.initializeFirestore(app, {
+        localCache: isMain ? fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) : fs.memoryLocalCache(),
+      });
+      if (EMU) fs.connectFirestoreEmulator(db, LB_OPTIONS.emulatorHost, 8080);
     } catch (e) {
       db = fs.getFirestore(app);
     }
-    if (EMU) fs.connectFirestoreEmulator(db, LB_OPTIONS.emulatorHost, 8080);
     return { app, auth, user, db, fs };
   })();
-  readyP.catch((e) => { console.warn("[Firebase] initialisation impossible :", e); readyP = null; });
-  return readyP;
+  ready.set(profileId, p);
+  p.catch((e) => { console.warn("[Firebase] initialisation impossible :", e); ready.delete(profileId); });
+  return p;
 }
 
 /** Traduit une erreur Firebase en message clair pour le joueur. */

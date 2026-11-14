@@ -10,7 +10,9 @@ sun-pilot-firebase/
 ├── js/
 │   ├── firebase-config.js   ← configuration du projet Firebase (déjà remplie)
 │   ├── firebase.js          ← noyau partagé : App, App Check, Auth anonyme, Firestore
+│   ├── profiles.js          ← pilotes de l'appareil (jusqu'à 4, chacun son compte Firebase)
 │   ├── identity.js          ← pseudo obligatoire (création, unicité, modification)
+│   ├── pilots.js            ← écran « 👥 QUI PILOTE ? » (choisir, ajouter, retirer)
 │   ├── leaderboard.js       ← classement mondial (scores, top 10, rang)
 │   ├── modal.js             ← fenêtres modales réutilisables (animations)
 │   └── main.js              ← point d'entrée des modules
@@ -93,6 +95,8 @@ scores/{uid}_{mode} { uid, pseudo, score, mode, bitcoins, distance, level, creat
 - Pseudo : 3 à 15 caractères, `a-z A-Z 0-9 _ -` (espaces, accents, emoji, HTML refusés et retirés automatiquement à la saisie).
 - Création / modification en **une transaction** (profil + réservation du pseudo + libération de l'ancien) : deux joueurs ne peuvent jamais obtenir le même pseudo.
 - Le pseudo d'un score doit être celui du profil : les classements affichent toujours le pseudo officiel, mis à jour automatiquement après un changement.
+
+**Plusieurs joueurs sur le même appareil (chacun son tour)** : jusqu'à 4 pilotes. Chaque pilote a sa propre instance Firebase nommée, donc son propre compte anonyme (UID), son pseudo, ses records locaux et son rang mondial. Avec 2 pilotes ou plus, JOUER ouvre « 👥 QUI PILOTE ? » ; au Game Over, « 👥 JOUEUR SUIVANT ». Le pseudo du pilote est affiché au-dessus de sa montgolfière pendant la partie. Dans le classement : « TOI » = pilote actif, « ICI » = autre pilote de l'appareil.
 
 ## Sécurité (firestore.rules)
 
