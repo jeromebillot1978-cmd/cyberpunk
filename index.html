@@ -677,6 +677,7 @@ let DPR=1, SCALE=1, W=1280, H=720, GROUND=650;
 let skyCanvas=null, layers=[], resizeTimer=null;
 
 function resize(){
+  const oldGround = GROUND, wasPortrait = W < H;
   DPR = Math.min(window.devicePixelRatio||1, 2);
   const cw = window.innerWidth, ch = window.innerHeight;
   canvas.width = Math.round(cw*DPR); canvas.height = Math.round(ch*DPR);
@@ -684,6 +685,12 @@ function resize(){
   if(cw/SCALE < 640) SCALE = cw/640;   // écran portrait : on garde au moins 640 unités de large
   W = cw/SCALE; H = ch/SCALE; GROUND = H-70;
   P.x = clamp(W*0.24, 110, 320);
+  // Correctif rotation : la montgolfière garde sa hauteur relative (sinon elle peut se retrouver
+  // sous le nouveau sol et exploser), et la partie se met en pause quand l'orientation change
+  if(typeof state!=='undefined' && (state==='play'||state==='paused') && oldGround>0){
+    P.y = clamp(P.y*GROUND/oldGround, 34, GROUND-114*PS-1);
+    if(state==='play' && wasPortrait !== (W < H)){ pause(); showBanner('🔄 ÉCRAN TOURNÉ'); }
+  }
   clearTimeout(resizeTimer); resizeTimer = setTimeout(buildBackground, 120);
   if(!skyCanvas) buildBackground();
 }
@@ -819,6 +826,10 @@ function creditedId(){ return (DIFF_LIST.find(d=>d.order===runMinOrder)||D()).id
 let obstacles=[], coins=[], powerups=[], parts=[], popups=[];
 let spawnAcc=0, nextSpacing=500, powerAcc=0, nextPower=2600, lastSafeY=300;
 let shake=0, flash={a:0,c:'#fff'};
+// Anti-AFK : secondes de jeu écoulées sans aucune action du joueur
+let idleTime=0;
+const TUT_IDLE_SKIP=10;   // tutoriel abandonné sans action → il se termine, les obstacles arrivent
+const AFK_PAUSE=30;       // garde-fou général : pause « Toujours là ? » après 30 s sans action
 let holding=false, combo=0, comboTimer=0, recordAnnounced=false, newRecord=false;
 let fwTimer=0, fwCount=0, dyingTimer=0, canRestart=false;
 const P = { x:200, y:300, vy:0, shield:0, magnet:0, turbo:0, invuln:0, flame:0, tilt:0, rot:0, blink:0 };
@@ -1325,6 +1336,8 @@ function tutStop(){ if(Tut.step<0) return; Tut.step=-1; hideTip(); }
 function tutUpdate(dt){
   if(Tut.step<0) return;
   Tut.t+=dt; if(holding) Tut.hold+=dt; if(!holding&&P.vy>80) Tut.fall+=dt;
+  // Correctif AFK : un tutoriel laissé sans action se termine tout seul
+  if(idleTime>TUT_IDLE_SKIP){ tutStop(); showTip('⏭ Tutoriel passé : les obstacles arrivent !',2.6,'TUTORIEL'); spawnAcc=nextSpacing*0.4; return; }
   if(TUT_STEPS[Tut.step].done()){
     Sound.level(); Tut.step++; Tut.t=0;
     if(Tut.step>=TUT_STEPS.length){ Tut.step=-1; showTip('🚀 Bravo ! Tu es prêt. Bonne chance !',2.6,'TUTORIEL TERMINÉ'); spawnAcc=nextSpacing*0.4; }
@@ -1405,6 +1418,7 @@ function startGame(){
   if(d.startShield){ P.shield=P.pmax.shield=PMAX.shield*d.powerDurMul; }      // Débutant : bouclier offert
   spawnAcc=-250; nextSpacing=450; powerAcc=0; nextPower=rand(...d.powerDist)*0.8; lastSafeY=P.y;
   combo=0; comboTimer=0; recordAnnounced=false; newRecord=false; fwCount=0;
+  idleTime=0;
   runMinOrder=d.order; bestAtStart=bests[d.id];
   hintsThisRun.clear(); hideTip(); tutStop();
   if(d.tutorial==='full') tutStart(); else if(d.tutorial==='tips') hint('start');
@@ -1414,7 +1428,7 @@ function startGame(){
 }
 function press(){
   if(state!=='play') return;
-  Sound.init(); holding=true;
+  Sound.init(); holding=true; idleTime=0;
   P.vy=Math.min(P.vy,-CFG.tapImpulse*D().liftMul); P.flame=0.25; Sound.flap();
   for(let i=0;i<5;i++) emit({x:P.x+rand(-6,6),y:P.y+44*PS,vx:rand(-120,-40),vy:rand(20,90),life:rand(.25,.5),size:rand(4,8),color:'#ffb300',drag:2});
 }
@@ -1487,7 +1501,8 @@ function updatePlay(dt){
   // Vitesse = base × mode × progression (la progression utilise les points bruts, sans multiplicateur)
   speed=CFG.baseSpeed*d.speedMul*(1+Math.min(rawProg/1400,1.2*d.speedRamp))*turboMult;
   const dx=speed*dt; scroll+=dx; runDist+=dx; curScroll=speed;
-  addPoints(dx/45);
+  // Correctif AFK : le tutoriel est un entraînement, la distance n'y rapporte aucun point
+  if(Tut.step<0) addPoints(dx/45);
 
   // --- physique du ballon (adaptée au mode) ---
   if(holding){ P.vy-=CFG.lift*d.liftMul*dt; P.flame=0.12;
@@ -1521,6 +1536,8 @@ function updatePlay(dt){
   comboTimer-=dt; if(comboTimer<=0) combo=0;
 
   // --- tutoriel / apparitions ---
+  if(holding) idleTime=0; else idleTime+=dt;
+  if(idleTime>AFK_PAUSE){ idleTime=0; pause(); showBanner('⏸ TOUJOURS LÀ ?'); return; }
   tutUpdate(dt);
   if(Tut.step<0){ // pas d'obstacle aléatoire pendant le tutoriel
     spawnAcc+=dx; if(spawnAcc>=nextSpacing){ spawnAcc=0; spawnChunk(); }
