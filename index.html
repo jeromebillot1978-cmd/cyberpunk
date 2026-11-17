@@ -524,9 +524,9 @@ const DIFFICULTIES = {
       'Sol rebondissant, bouclier offert au départ',
       'Bonus fréquents et plus longs, mini-aimant permanent',
       'Tutoriel guidé + explication de chaque obstacle',
-      'Score ×1',
+      'Score ×0,3',
     ],
-    scoreMul:1,
+    scoreMul:0.3,
     speedMul:0.67, speedRamp:0.55,          // 1/0.67 ≈ +50 % de temps pour réagir
     gravityMul:0.82, liftMul:0.9, maxFallMul:0.8,
     hitboxMul:0.82,                          // collisions tolérantes
@@ -575,9 +575,9 @@ const DIFFICULTIES = {
       'Hover-cars rapides, alerte sonore très courte seulement',
       'Plafond électrifié, aucune aide visuelle',
       'Bonus rares et plus courts, aucun tutoriel',
-      'Score ×3',
+      'Score ×5',
     ],
-    scoreMul:3,
+    scoreMul:5,
     speedMul:1.6, speedRamp:0.75,
     gravityMul:1.18, liftMul:1.15, maxFallMul:1.2,
     hitboxMul:1.05,
@@ -599,6 +599,20 @@ const D = ()=>DIFFICULTIES[diffId];
 
 // Records séparés par difficulté (l'ancien record unique est repris en Intermédiaire)
 // Pilote actif (appareil partagé) : chaque joueur a ses propres records locaux
+// Échelle des scores v2 (17/11/2026) : Débutant ×0,3 (au lieu de ×1), Pro ×5 (au lieu de ×3).
+// Les records locaux de chaque pilote sont convertis une seule fois, comme ceux du classement en ligne.
+(function migrateScoresV2(){
+  try{
+    if(localStorage.getItem('sp_score_version')==='2') return;
+    const F={beginner:0.3, pro:5/3};
+    Object.keys(localStorage).forEach(k=>{
+      const m=/^sp_best_(beginner|pro)(__.+)?$/.exec(k);
+      if(m){ const v=parseInt(localStorage.getItem(k),10)||0; localStorage.setItem(k,String(Math.round(v*F[m[1]]))); }
+      if(/^sp_online_best(__.+)?$/.test(k)) localStorage.removeItem(k);   // relu depuis le serveur au prochain record
+    });
+    localStorage.setItem('sp_score_version','2');
+  }catch(e){}
+})();
 let pilotId = (()=>{ try{ return JSON.parse(localStorage.getItem('sp_active_profile'))||'p0'; }catch(e){ return 'p0'; } })();
 let pilotName = '';
 const bestKey=(mode,pid=pilotId)=>pid==='p0'?'sp_best_'+mode:'sp_best_'+mode+'__'+pid;

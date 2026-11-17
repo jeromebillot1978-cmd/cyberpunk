@@ -110,7 +110,7 @@ scores/{uid}_{mode} { uid, pseudo, score, mode, bitcoins, distance, level, creat
 | Seul le meilleur score est gardé | une mise à jour n'est acceptée que si `score` est **strictement supérieur** |
 | Anti-spam | 10 s minimum entre deux écritures d'un même document, horodatage imposé par le serveur |
 | Données propres | champs exacts, types entiers, bornes, mode connu, pseudo filtré (pas de HTML) |
-| Scores impossibles | `score ≤ 3 × (distance × 2 + bitcoins × 40) + 100` |
+| Scores impossibles | `score ≤ 5 × (distance × 2 + bitcoins × 40) + 100 (échelle v2 : Débutant ×0,3, Intermédiaire ×1,5, Pro ×5)` |
 | Pas d'aspiration de la base | toute requête de liste doit avoir une limite ≤ 1000 |
 | Rien d'autre n'est accessible | tout le reste de la base est fermé, suppression interdite |
 

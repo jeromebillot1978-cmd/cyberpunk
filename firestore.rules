@@ -97,8 +97,10 @@ service cloud.firestore {
     // ---------- Scores ----------
     // Le pseudo d'un score doit être exactement celui du profil du joueur
     function validScore(d) {
-      return d.keys().hasOnly(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
-        && d.keys().hasAll(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt'])
+      return d.keys().hasOnly(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt', 'v'])
+        && d.keys().hasAll(['uid', 'pseudo', 'score', 'mode', 'bitcoins', 'distance', 'level', 'createdAt', 'v'])
+        // Échelle des scores v2 (Débutant ×0,3, Pro ×5) : les anciennes versions du jeu sont refusées
+        && d.v == 2
         && d.uid == request.auth.uid
         && validMode(d.mode)
         && validPseudo(d.pseudo)
@@ -108,8 +110,8 @@ service cloud.firestore {
         && d.distance is int && d.distance >= 0 && d.distance <= 10000000
         && d.level is int    && d.level >= 1    && d.level <= 100000
         // Plausibilité : le score ne peut pas dépasser ce que la distance
-        // et les Bitcoins permettent d'obtenir (multiplicateur max ×3)
-        && d.score <= 3 * (d.distance * 2 + d.bitcoins * 40) + 100
+        // et les Bitcoins permettent d'obtenir (multiplicateur max ×5)
+        && d.score <= 5 * (d.distance * 2 + d.bitcoins * 40) + 100
         && d.createdAt == request.time;
     }
 

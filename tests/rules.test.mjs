@@ -81,9 +81,11 @@ await t("accepté : eve reprend le pseudo libéré JERCAT", () => assertSucceeds
 await t("refus : supprimer son profil", () => assertFails(deleteDoc(doc(alice, "users/alice"))));
 
 console.log("Scores");
-const good = (uid, pseudo, over = {}) => ({ uid, pseudo, score: 1500, mode: "pro", bitcoins: 30, distance: 900, level: 3, createdAt: ts(), ...over });
+const good = (uid, pseudo, over = {}) => ({ uid, pseudo, score: 1500, mode: "pro", bitcoins: 30, distance: 900, level: 3, createdAt: ts(), v: 2, ...over });
 await t("accepté : score avec le pseudo du profil", () => assertSucceeds(setDoc(doc(alice, "scores/alice_pro"), good("alice", "JERCAT_PRO"))));
 await t("refus : score avec un autre pseudo", () => assertFails(setDoc(doc(bob, "scores/bob_pro"), good("bob", "JERCAT_PRO"))));
+await t("refus : ancienne version du jeu (sans échelle v2)", async () => { const g = good("bob", "Neo_Pilot-02"); delete g.v; await assertFails(setDoc(doc(bob, "scores/bob_pro"), g)); });
+await t("refus : mauvaise version d'échelle", () => assertFails(setDoc(doc(bob, "scores/bob_pro"), good("bob", "Neo_Pilot-02", { v: 1 }))));
 await t("refus : score sans profil", () => assertFails(setDoc(doc(ctx("zed"), "scores/zed_pro"), good("zed", "Zed123"))));
 await t("refus : écrire le score d'un autre", () => assertFails(setDoc(doc(bob, "scores/alice_beginner"), good("alice", "JERCAT_PRO", { mode: "beginner" }))));
 await t("refus : id ne correspond pas (doublon)", () => assertFails(setDoc(doc(bob, "scores/bob_pro2"), good("bob", "Neo_Pilot-02"))));

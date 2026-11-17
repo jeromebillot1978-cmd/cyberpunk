@@ -22,6 +22,7 @@ const TOP_N = 10;
 const RANK_LIMIT = 1000;              // au-delà : « #1000+ » (coût max : 1 lecture)
 const RANK_TTL = 5 * 60 * 1000;       // rang mis en cache 5 min
 const MIN_WRITE_GAP = 11000;          // les règles imposent 10 s entre deux records
+const SCORE_VERSION = 2;              // échelle des scores (v2 : Débutant ×0,3, Pro ×5), exigée par les règles
 
 const SP = window.SunPilot;
 
@@ -85,7 +86,7 @@ async function submitScore({ score, mode, bitcoins, distance, level, profileId }
   if (wait > 0) await sleep(wait);
 
   const payload = {
-    uid: user.uid, pseudo, score, mode,
+    uid: user.uid, pseudo, score, mode, v: SCORE_VERSION,
     bitcoins: Math.max(0, Math.floor(bitcoins)),
     distance: Math.max(0, Math.floor(distance)),
     level: Math.max(1, Math.floor(level)),
