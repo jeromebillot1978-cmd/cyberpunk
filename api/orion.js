@@ -143,7 +143,7 @@ async function animate(a) {
 /* ---------- Point d'entrée ---------- */
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  res.setHeader("X-Orion-Version", "3");
+  res.setHeader("X-Orion-Version", "4");
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
   if (!allowedOrigin(req)) return res.status(403).json({ error: "Origine non autorisée" });
