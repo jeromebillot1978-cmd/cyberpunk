@@ -3,7 +3,7 @@
 import handler from "../api/orion.js";
 import { admin } from "../api/_lib/admin.js";
 
-const a = admin();
+const a = await admin();
 if (!a) { console.log("Émulateurs absents"); process.exit(1); }
 const { db, FieldValue, Timestamp } = a;
 let pass = 0, fail = 0;

@@ -143,11 +143,12 @@ async function animate(a) {
 /* ---------- Point d'entrée ---------- */
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Orion-Version", "3");
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
   if (!allowedOrigin(req)) return res.status(403).json({ error: "Origine non autorisée" });
   let a = null;
-  try { a = admin(); } catch (e) { console.error("[ORION] initialisation :", e); }
+  try { a = await admin(); } catch (e) { console.error("[ORION] initialisation :", e); }
   if (!a) return res.status(503).json({ error: `ORION n'est pas configuré (${adminError()})` });
 
   try {

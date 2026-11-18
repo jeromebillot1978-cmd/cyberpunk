@@ -5,14 +5,22 @@
    (Console Firebase → ⚙ Paramètres → Comptes de service →
    Générer une nouvelle clé privée). Jamais côté navigateur.
    ========================================================= */
-import { initializeApp, cert, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+// firebase-admin est chargé au premier appel : une erreur de chargement devient un message clair
+let mods = null;
+async function load() {
+  if (mods) return mods;
+  const [app, auth, fs] = await Promise.all([import("firebase-admin/app"), import("firebase-admin/auth"), import("firebase-admin/firestore")]);
+  mods = { ...app, ...auth, ...fs };
+  return mods;
+}
 
 let cached = null;
 
-export function admin() {
+export async function admin() {
   if (cached) return cached;
+  let m;
+  try { m = await load(); } catch (e) { lastError = "firebase-admin introuvable : " + (e.message || e); console.error("[ORION]", e); return null; }
+  const { initializeApp, cert, getApps, getAuth, getFirestore, FieldValue, Timestamp } = m;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   // Tests locaux : émulateurs Firebase, aucun compte de service nécessaire
   if (!raw && process.env.FIRESTORE_EMULATOR_HOST && process.env.FIREBASE_AUTH_EMULATOR_HOST) {
