@@ -23,13 +23,32 @@ export function admin() {
   if (!raw) return null;
   let sa;
   try {
-    sa = JSON.parse(raw.trim().startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8"));
+    const text = raw.trim().replace(/^['"]|['"]$/g, "");          // guillemets ajoutés par erreur autour du JSON
+    sa = JSON.parse(text.startsWith("{") ? text : Buffer.from(text, "base64").toString("utf8"));
     if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
   } catch (e) {
-    console.error("[ORION] FIREBASE_SERVICE_ACCOUNT illisible");
+    lastError = "FIREBASE_SERVICE_ACCOUNT illisible : il faut coller tout le contenu du fichier JSON, de { à }";
+    console.error("[ORION]", lastError);
     return null;
   }
-  const app = getApps()[0] || initializeApp({ credential: cert(sa), projectId: sa.project_id });
-  cached = { auth: getAuth(app), db: getFirestore(app), FieldValue, Timestamp };
-  return cached;
+  if (!sa.private_key || !sa.client_email || !sa.project_id) {
+    lastError = "FIREBASE_SERVICE_ACCOUNT incomplet : private_key, client_email ou project_id manquant";
+    console.error("[ORION]", lastError);
+    return null;
+  }
+  try {
+    const app = getApps()[0] || initializeApp({ credential: cert(sa), projectId: sa.project_id });
+    cached = { auth: getAuth(app), db: getFirestore(app), FieldValue, Timestamp };
+    return cached;
+  } catch (e) {
+    lastError = "Compte de service refusé : " + (e.message || e);
+    console.error("[ORION]", lastError);
+    return null;
+  }
+}
+
+let lastError = "FIREBASE_SERVICE_ACCOUNT manquant";
+/** Raison pour laquelle ORION n'est pas configuré (sans aucune donnée secrète). */
+export function adminError() {
+  return lastError.replace(/-----BEGIN[\s\S]*?-----END[^-]*-----/g, "[clé masquée]").slice(0, 200);
 }

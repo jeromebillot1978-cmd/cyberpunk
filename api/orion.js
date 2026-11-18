@@ -12,7 +12,7 @@
    et 40 / jour par joueur, quotas globaux d'IA et de messages,
    chaque événement traité une seule fois (documents de dédoublonnage).
    ========================================================= */
-import { admin } from "./_lib/admin.js";
+import { admin, adminError } from "./_lib/admin.js";
 import { faqAnswer, welcomeText, recordText, animationText, FALLBACK } from "./_lib/faq.js";
 import { askGroq, sanitize } from "./_lib/groq.js";
 
@@ -146,8 +146,9 @@ export default async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
   if (!allowedOrigin(req)) return res.status(403).json({ error: "Origine non autorisée" });
-  const a = admin();
-  if (!a) return res.status(503).json({ error: "ORION n'est pas configuré (FIREBASE_SERVICE_ACCOUNT manquant)" });
+  let a = null;
+  try { a = admin(); } catch (e) { console.error("[ORION] initialisation :", e); }
+  if (!a) return res.status(503).json({ error: `ORION n'est pas configuré (${adminError()})` });
 
   try {
     const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
