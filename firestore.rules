@@ -7,6 +7,16 @@ rules_version = '2';
 // pseudos/{pseudo}   réservation d'un pseudo (en minuscules) : { uid }
 //                    → garantit l'unicité, insensible à la casse
 // scores/{uid_mode}  meilleur score d'un joueur dans un mode
+//
+// CANAL DES PILOTES (chat communautaire)
+// messages/{id}            messages du canal (joueurs, système, ORION)
+// chatState/{uid}          état anti-spam privé de chaque pilote
+// presence/{uid}           dernier signe de vie dans le canal (pilotes connectés)
+// reports/{msgId_uid}      signalements (un seul par message et par joueur)
+// moderation/{id}          journal de modération (masquages automatiques, actions)
+// moderators/{uid}         modérateurs (créés depuis la console Firebase)
+// bans/{uid}               pilotes exclus du canal
+// orion*/                  données du pilote IA ORION (serveur uniquement)
 // =========================================================
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -144,7 +154,275 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Tout le reste de la base est fermé
+    // =====================================================
+    // CANAL DES PILOTES
+    // =====================================================
+    function statePath(uid) {
+      return /databases/$(database)/documents/chatState/$(uid);
+    }
+    function msgPath(id) {
+      return /databases/$(database)/documents/messages/$(id);
+    }
+    function reportPath(id) {
+      return /databases/$(database)/documents/reports/$(id);
+    }
+    function isModerator() {
+      return signedIn() && exists(/databases/$(database)/documents/moderators/$(request.auth.uid));
+    }
+    function notBanned() {
+      return !exists(/databases/$(database)/documents/bans/$(request.auth.uid));
+    }
+    function myPseudo() {
+      return get(userPath(request.auth.uid)).data.pseudo;
+    }
+
+    // Texte d'un message : 1 à 280 caractères, pas que des espaces, aucun caractère
+    // de contrôle, aucun lien, aucun mot interdit (liste identique à js/chat-filter.js)
+    function validText(t) {
+      return t is string
+        && t.size() >= 1 && t.size() <= 280
+        && t.matches('(?s).*[^\\s].*')
+        && !t.matches('(?s).*[\\x00-\\x1f\\x7f].*')
+        && !t.lower().matches('(?s).*(https?://|www\\.|discord\\.gg|bit\\.ly|t\\.me/|\\.(com|net|org|io|gg|xyz|ru|tk|ly)/).*')
+        && !t.lower().matches('(?s).*\\b(connard|connards|connasse|salope|salopes|pute|putes|encule|enculé|enculer|ntm|nique ta|niquer ta|fdp|fils de pute|batard|bâtard|pédé|pd|tapette|negro|négro|bougnoul|youpin|bicot|sale noir|sale arabe|sale juif|heil hitler|suce ma|suce moi)\\b.*');
+    }
+
+    // ---------- État anti-spam (privé) ----------
+    // lastMsgAt  : dernier message (délai de 4 s entre deux messages)
+    // winStart / winCount : fenêtre glissante de 60 s, 6 messages maximum
+    // joinedAt / leftAt   : messages « rejoint / quitte » (1 par tranche de 10 min)
+    // recordAt   : annonce de record (1 par tranche de 10 min)
+    // welcomedAt : « Bienvenue à bord » (une seule fois, à la création)
+    function validState(d) {
+      return d.keys().hasOnly(['uid', 'createdAt', 'welcomedAt', 'lastMsgAt', 'lastMsgId', 'winStart', 'winCount', 'joinedAt', 'leftAt', 'recordAt'])
+        && d.keys().hasAll(['uid', 'createdAt', 'welcomedAt', 'lastMsgAt', 'lastMsgId', 'winStart', 'winCount', 'joinedAt', 'leftAt', 'recordAt'])
+        && d.uid == request.auth.uid
+        && d.createdAt is timestamp && d.welcomedAt is timestamp
+        && d.lastMsgAt is timestamp && d.lastMsgAt <= request.time
+        && d.lastMsgId is string && d.lastMsgId.size() <= 40
+        && d.winStart is timestamp && d.winStart <= request.time
+        && d.winCount is int && d.winCount >= 0 && d.winCount <= 6
+        && d.joinedAt is timestamp && d.joinedAt <= request.time
+        && d.leftAt is timestamp && d.leftAt <= request.time
+        && d.recordAt is timestamp && d.recordAt <= request.time;
+    }
+    function same(n, o, k) { return n[k] == o[k]; }
+
+    match /chatState/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+
+      // Création : au premier passage dans le canal, avec le message « Bienvenue à bord »
+      allow create: if isOwner(uid) && notBanned()
+        && validState(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.welcomedAt == request.time
+        && request.resource.data.winCount == 0;
+
+      // Mise à jour : chaque compteur ne peut évoluer que selon sa règle
+      allow update: if isOwner(uid)
+        && validState(request.resource.data)
+        && same(request.resource.data, resource.data, 'createdAt')
+        && same(request.resource.data, resource.data, 'welcomedAt')
+        // délai de 4 s entre deux messages
+        && (same(request.resource.data, resource.data, 'lastMsgAt')
+            || (request.resource.data.lastMsgAt == request.time
+                && request.time > resource.data.lastMsgAt + duration.value(4, 's')))
+        // fenêtre de 60 s : +1 dans la fenêtre (6 maximum), ou nouvelle fenêtre
+        && ((same(request.resource.data, resource.data, 'winStart') && same(request.resource.data, resource.data, 'winCount'))
+            || (request.time < resource.data.winStart + duration.value(60, 's')
+                && same(request.resource.data, resource.data, 'winStart')
+                && request.resource.data.winCount == resource.data.winCount + 1)
+            || (request.time >= resource.data.winStart + duration.value(60, 's')
+                && request.resource.data.winStart == request.time
+                && request.resource.data.winCount == 1))
+        // « a rejoint le canal » : au plus une fois toutes les 10 min
+        && (same(request.resource.data, resource.data, 'joinedAt')
+            || (request.resource.data.joinedAt == request.time
+                && request.time > resource.data.joinedAt + duration.value(10, 'm')))
+        // « a quitté le canal » : une seule fois après chaque arrivée
+        && (same(request.resource.data, resource.data, 'leftAt')
+            || (request.resource.data.leftAt == request.time
+                && resource.data.leftAt < resource.data.joinedAt))
+        // annonce de record : au plus une fois toutes les 10 min
+        && (same(request.resource.data, resource.data, 'recordAt')
+            || (request.resource.data.recordAt == request.time
+                && request.time > resource.data.recordAt + duration.value(10, 'm')));
+
+      allow delete: if false;
+    }
+
+    // ---------- Messages ----------
+    function baseMsg(d) {
+      return d.uid == request.auth.uid
+        && d.pseudo == myPseudo()
+        && d.createdAt == request.time
+        && d.hidden == false
+        && d.reports == 0;
+    }
+    // L'état anti-spam a bien été mis à jour dans la même écriture groupée
+    function stateMoved(field) {
+      return getAfter(statePath(request.auth.uid)).data[field] == request.time
+        && get(statePath(request.auth.uid)).data[field] != request.time;
+    }
+    function userMsg(d, id) {
+      return d.keys().hasOnly(['uid', 'pseudo', 'type', 'text', 'createdAt', 'hidden', 'reports'])
+        && d.keys().hasAll(['uid', 'pseudo', 'type', 'text', 'createdAt', 'hidden', 'reports'])
+        && validText(d.text)
+        && stateMoved('lastMsgAt')
+        && getAfter(statePath(request.auth.uid)).data.lastMsgId == id
+        && (getAfter(statePath(request.auth.uid)).data.winCount != get(statePath(request.auth.uid)).data.winCount
+            || getAfter(statePath(request.auth.uid)).data.winStart != get(statePath(request.auth.uid)).data.winStart);
+    }
+    function sysKeys(d) {
+      return d.keys().hasOnly(['uid', 'pseudo', 'type', 'createdAt', 'hidden', 'reports'])
+        && d.keys().hasAll(['uid', 'pseudo', 'type', 'createdAt', 'hidden', 'reports']);
+    }
+    function scorePath(mode) {
+      return /databases/$(database)/documents/scores/$(request.auth.uid + '_' + mode);
+    }
+    function recordMsg(d) {
+      return d.keys().hasOnly(['uid', 'pseudo', 'type', 'mode', 'score', 'createdAt', 'hidden', 'reports'])
+        && d.keys().hasAll(['uid', 'pseudo', 'type', 'mode', 'score', 'createdAt', 'hidden', 'reports'])
+        && validMode(d.mode)
+        && d.score is int
+        // le record annoncé est exactement le record enregistré il y a moins de 5 min
+        && get(scorePath(d.mode)).data.score == d.score
+        && get(scorePath(d.mode)).data.createdAt > request.time - duration.value(5, 'm')
+        && stateMoved('recordAt');
+    }
+
+    match /messages/{msgId} {
+      // Lecture : messages visibles uniquement (les modérateurs voient tout)
+      allow get: if resource.data.hidden == false || isModerator();
+      allow list: if request.query.limit <= 50 && (resource.data.hidden == false || isModerator());
+
+      allow create: if signedIn() && notBanned()
+        && msgId.size() <= 40
+        && baseMsg(request.resource.data)
+        && (
+          (request.resource.data.type == 'user' && userMsg(request.resource.data, msgId))
+          // « Bienvenue à bord » : une seule fois, à la création de l'état anti-spam
+          || (request.resource.data.type == 'welcome' && sysKeys(request.resource.data)
+              && !exists(statePath(request.auth.uid))
+              && getAfter(statePath(request.auth.uid)).data.welcomedAt == request.time)
+          || (request.resource.data.type == 'join' && sysKeys(request.resource.data) && stateMoved('joinedAt'))
+          || (request.resource.data.type == 'leave' && sysKeys(request.resource.data) && stateMoved('leftAt'))
+          || (request.resource.data.type == 'record' && recordMsg(request.resource.data))
+        );
+      // Les messages d'ORION (type « orion ») sont écrits uniquement par le serveur.
+
+      allow update: if signedIn() && (
+        // L'auteur corrige son texte pendant 10 min
+        (resource.data.uid == request.auth.uid
+          && resource.data.type == 'user'
+          && resource.data.hidden == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
+          && validText(request.resource.data.text)
+          && request.resource.data.editedAt == request.time
+          && request.time < resource.data.createdAt + duration.value(10, 'm'))
+        // Un autre pilote signale : +1, masqué automatiquement à 3 signalements
+        || (resource.data.uid != request.auth.uid
+          && resource.data.hidden == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reports', 'hidden'])
+          && request.resource.data.reports == resource.data.reports + 1
+          && request.resource.data.hidden == (request.resource.data.reports >= 3)
+          && existsAfter(reportPath(msgId + '_' + request.auth.uid))
+          && !exists(reportPath(msgId + '_' + request.auth.uid)))
+        // Modérateur : masquer ou réafficher
+        || (isModerator()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden', 'moderatedBy', 'moderatedAt'])
+          && request.resource.data.hidden is bool
+          && request.resource.data.moderatedBy == request.auth.uid
+          && request.resource.data.moderatedAt == request.time)
+      );
+
+      // Suppression : l'auteur (ses messages écrits), ou un modérateur
+      allow delete: if signedIn()
+        && ((resource.data.uid == request.auth.uid && resource.data.type == 'user') || isModerator());
+    }
+
+    // ---------- Signalements ----------
+    match /reports/{reportId} {
+      allow read: if isModerator();
+      allow create: if signedIn() && notBanned()
+        && request.resource.data.keys().hasOnly(['messageId', 'reporterUid', 'authorUid', 'reason', 'createdAt'])
+        && request.resource.data.keys().hasAll(['messageId', 'reporterUid', 'authorUid', 'reason', 'createdAt'])
+        && reportId == request.resource.data.messageId + '_' + request.auth.uid
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.reason in ['insulte', 'spam', 'haine', 'triche', 'autre']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.authorUid == get(msgPath(request.resource.data.messageId)).data.uid
+        && request.resource.data.authorUid != request.auth.uid
+        && getAfter(msgPath(request.resource.data.messageId)).data.reports
+           == get(msgPath(request.resource.data.messageId)).data.reports + 1;
+      allow update: if false;
+      allow delete: if isModerator();
+    }
+
+    // ---------- Journal de modération ----------
+    match /moderation/{logId} {
+      allow read: if isModerator();
+      // Masquage automatique : journalisé par le 3e signalement, dans la même écriture
+      allow create: if signedIn()
+        && logId == 'autohide_' + request.resource.data.messageId
+        && request.resource.data.keys().hasOnly(['action', 'messageId', 'reports', 'by', 'createdAt'])
+        && request.resource.data.keys().hasAll(['action', 'messageId', 'reports', 'by', 'createdAt'])
+        && request.resource.data.action == 'auto_hide'
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && getAfter(msgPath(request.resource.data.messageId)).data.hidden == true
+        && get(msgPath(request.resource.data.messageId)).data.hidden == false
+        && request.resource.data.reports == getAfter(msgPath(request.resource.data.messageId)).data.reports
+        // Action manuelle d'un modérateur
+        || (isModerator()
+          && request.resource.data.keys().hasOnly(['action', 'messageId', 'targetUid', 'reason', 'by', 'createdAt'])
+          && request.resource.data.action in ['hide', 'unhide', 'delete', 'ban', 'unban']
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.createdAt == request.time);
+      allow update, delete: if false;
+    }
+
+    // ---------- Modérateurs et exclusions (gérés depuis la console ou par un modérateur) ----------
+    match /moderators/{uid} {
+      allow get: if isOwner(uid);
+      allow list, write: if false;
+    }
+    match /bans/{uid} {
+      allow get: if isOwner(uid) || isModerator();
+      allow list: if isModerator() && request.query.limit <= 100;
+      allow create: if isModerator()
+        && request.resource.data.keys().hasOnly(['uid', 'pseudo', 'reason', 'by', 'createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && !exists(/databases/$(database)/documents/moderators/$(uid));
+      allow delete: if isModerator();
+      allow update: if false;
+    }
+
+    // ---------- Présence (pilotes connectés au canal) ----------
+    match /presence/{uid} {
+      allow get: if true;
+      // Comptage et liste des pilotes présents : limite obligatoire
+      allow list: if request.query.limit <= 1000;
+      allow create: if isOwner(uid) && notBanned()
+        && request.resource.data.keys().hasOnly(['uid', 'pseudo', 'lastSeen'])
+        && request.resource.data.keys().hasAll(['uid', 'pseudo', 'lastSeen'])
+        && request.resource.data.uid == uid
+        && request.resource.data.pseudo == myPseudo()
+        && request.resource.data.lastSeen == request.time;
+      // Signal de vie : au plus toutes les 30 s
+      allow update: if isOwner(uid) && notBanned()
+        && request.resource.data.keys().hasOnly(['uid', 'pseudo', 'lastSeen'])
+        && request.resource.data.uid == uid
+        && request.resource.data.pseudo == myPseudo()
+        && request.resource.data.lastSeen == request.time
+        && request.time > resource.data.lastSeen + duration.value(30, 's');
+      allow delete: if isOwner(uid);
+    }
+
+    // Tout le reste de la base est fermé (orion, orionLimits… : serveur uniquement)
     match /{document=**} {
       allow read, write: if false;
     }

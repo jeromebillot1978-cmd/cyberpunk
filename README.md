@@ -14,14 +14,19 @@ sun-pilot-firebase/
 │   ├── identity.js          ← pseudo obligatoire (création, unicité, modification)
 │   ├── pilots.js            ← écran « 👥 QUI PILOTE ? » (choisir, ajouter, retirer)
 │   ├── leaderboard.js       ← classement mondial (scores, top 10, rang)
+│   ├── chat.js              ← 💬 Canal des Pilotes (chat temps réel, modération, ORION)
+│   ├── chat-filter.js       ← filtre des messages (partagé avec le serveur ORION)
 │   ├── modal.js             ← fenêtres modales réutilisables (animations)
 │   └── main.js              ← point d'entrée des modules
+├── api/orion.js             ← ORION, pilote IA du canal (fonction Vercel + firebase-admin)
+├── package.json             ← dépendance serveur (firebase-admin)
+├── CANAL-DES-PILOTES.md     ← documentation complète du canal (sécurité, coûts, déploiement)
 ├── firestore.rules          ← règles de sécurité
 ├── firestore.indexes.json   ← index composite + exemptions (réduction des coûts)
 ├── firebase.json            ← déploiement des règles/index + émulateurs
 ├── vercel.json              ← en-têtes de sécurité et de cache
 ├── .vercelignore / .gitignore
-└── tests/                   ← 28 tests automatiques des règles (émulateur)
+└── tests/                   ← 178 tests automatiques (règles, canal, ORION) sur émulateur
 ```
 
 Le jeu reste 100 % jouable sans Firebase : records locaux, difficultés, tout fonctionne. Le classement s'active dès que `js/firebase-config.js` est rempli.

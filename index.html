@@ -285,6 +285,67 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
 .pl-win .btn2:disabled{opacity:.45;cursor:not-allowed}
 @media (max-width:430px){ .lb-tab{font-size:10px;letter-spacing:0;padding:9px 2px} .modal-win{padding:14px 12px 12px} .lb-row{grid-template-columns:38px 1fr auto;padding:8px} }
 @media (max-height:560px){ .modal-win{padding:12px} .lb-tabs{margin-top:8px} .lb-row{padding:6px 10px} }
+/* ---------- Canal des Pilotes (js/chat.js) ---------- */
+.chat-win{max-width:560px;height:min(760px,100%)}
+.chat-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 2px 6px}
+.chat-bar .lb-live{margin:0}
+.chat-online{display:inline-flex;align-items:center;gap:7px;cursor:pointer;padding:5px 10px;border-radius:999px;font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:1px;
+  color:#39ff88;background:rgba(57,255,136,.08);border:1px solid rgba(57,255,136,.45)}
+.chat-online i{width:7px;height:7px;border-radius:50%;background:#39ff88;box-shadow:0 0 8px #39ff88;animation:pulse .9s infinite alternate}
+.chat-online-list{display:flex;flex-wrap:wrap;gap:6px;margin:0 2px 8px;padding:8px;border-radius:7px;background:rgba(57,255,136,.05);border:1px dashed rgba(57,255,136,.35);font-size:13px;max-height:90px;overflow-y:auto}
+.chat-online-list span{padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.05);color:hsl(var(--h,190) 100% 75%)}
+.chat-feed{position:relative;flex:1;min-height:160px;overflow-y:auto;padding:4px 2px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;
+  border-radius:8px;background:linear-gradient(180deg,rgba(0,240,255,.04),rgba(138,60,255,.04));scrollbar-width:thin;scrollbar-color:rgba(0,240,255,.5) transparent}
+.chat-list{list-style:none;margin:0;padding:0 4px;display:flex;flex-direction:column;gap:6px}
+.chat-older{display:block;margin:6px auto 10px}
+.chat-day{align-self:center;margin:8px 0 2px;font-family:var(--fh);font-size:9px;letter-spacing:3px;color:#7d6fa8}
+.chat-empty{padding:30px 10px;text-align:center;color:#a99ad0;font-size:15px}
+.chat-msg{position:relative;padding:7px 10px 6px;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(0,240,255,.16);animation:rowIn .3s both;
+  user-select:text;-webkit-user-select:text;max-width:92%}
+.chat-msg.mine{align-self:flex-end;border-color:rgba(255,47,208,.45);background:linear-gradient(160deg,rgba(255,47,208,.12),rgba(138,60,255,.08))}
+.chat-msg.pending{opacity:.6}
+.chat-msg.orion{border-color:rgba(138,60,255,.85);background:linear-gradient(160deg,rgba(138,60,255,.22),rgba(0,240,255,.07));box-shadow:0 0 14px rgba(138,60,255,.35)}
+.msg-head{display:flex;align-items:baseline;gap:8px}
+.msg-name{font-family:var(--fh);font-size:12px;font-weight:900;letter-spacing:1px;color:hsl(var(--h,190) 100% 72%);text-shadow:0 0 8px hsl(var(--h,190) 100% 50% / .7);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-msg.orion .msg-name{color:#d3b8ff;text-shadow:0 0 10px var(--violet)}
+.msg-name em{font-style:normal;font-size:8px;margin-left:6px;padding:1px 5px;border-radius:3px;background:var(--violet);color:#fff;vertical-align:2px;text-shadow:none}
+.msg-name em.me{background:var(--pink)}
+.msg-head time,.chat-sys time{margin-left:auto;flex:none;font-size:11px;color:#7d6fa8}
+.msg-text{display:block;margin-top:2px;font-size:16px;line-height:1.3;color:#f1ebff;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg-text mark{background:rgba(0,240,255,.18);color:var(--cyan);border-radius:3px;padding:0 2px}
+.msg-actions{display:flex;gap:4px;justify-content:flex-end;margin-top:3px;opacity:.55;transition:opacity .15s}
+.chat-msg:hover .msg-actions,.chat-msg:focus-within .msg-actions{opacity:1}
+@media (hover:none){.msg-actions{opacity:.8}}
+.mini{min-width:30px;height:26px;padding:0 7px;border-radius:5px;cursor:pointer;font-size:12px;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(0,240,255,.3)}
+.mini:hover{background:rgba(0,240,255,.15)}
+.mini.danger{border-color:rgba(255,42,74,.7);background:rgba(255,42,74,.18)}
+.mini.ok{border-color:#39ff88}
+.msg-flag{font-size:11px;color:#ff9db0}
+.msg-report{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,42,74,.4);font-size:12px;color:#ffc3cf}
+.msg-edit{display:flex;gap:5px;margin-top:4px}
+.msg-edit input{flex:1;min-width:0}
+.chat-sys{align-self:center;display:flex;gap:10px;align-items:baseline;max-width:96%;padding:4px 12px;border-radius:999px;font-size:13px;color:#cdbdff;
+  background:rgba(138,60,255,.1);border:1px solid rgba(138,60,255,.3);text-align:center;animation:rowIn .3s both}
+.chat-sys.record{color:#fff6c2;border-color:rgba(255,194,26,.6);background:rgba(255,194,26,.1);text-shadow:0 0 8px rgba(255,194,26,.6)}
+.chat-sys.welcome{color:#bff8ff;border-color:rgba(0,240,255,.5);background:rgba(0,240,255,.08)}
+.chat-sys.leave{opacity:.7}
+.chat-new{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);z-index:2;padding:6px 14px;border-radius:999px;cursor:pointer;font-family:var(--fh);font-size:10px;font-weight:900;letter-spacing:1px;
+  color:#05010c;background:var(--cyan);border:none;box-shadow:0 0 14px var(--cyan)}
+.chat-form{display:flex;gap:8px;margin-top:10px}
+.chat-form input,.msg-edit input{font-family:var(--fb);font-size:16px;color:#fff;padding:11px 12px;border-radius:8px;outline:none;user-select:text;-webkit-user-select:text;touch-action:manipulation;
+  background:rgba(0,0,0,.45);border:1px solid rgba(0,240,255,.55);box-shadow:inset 0 0 12px rgba(0,240,255,.12)}
+.chat-form input{flex:1;min-width:0}
+.chat-form input:focus,.msg-edit input:focus{border-color:var(--pink);box-shadow:0 0 12px rgba(255,47,208,.45)}
+.chat-form input:disabled{opacity:.55}
+.chat-send{flex:none;width:52px;border-radius:8px;cursor:pointer;font-size:20px;color:#fff;border:1px solid var(--pink);
+  background:linear-gradient(135deg,rgba(255,47,208,.5),rgba(138,60,255,.5));box-shadow:0 0 14px rgba(255,47,208,.5)}
+.chat-send:disabled{opacity:.45;cursor:not-allowed}
+.chat-foot{display:flex;justify-content:space-between;gap:10px;margin-top:5px;min-height:17px;font-size:13px}
+.chat-status{color:#a99ad0}.chat-status.err{color:#ff8fa3}.chat-status.ok{color:#39ff88}
+.chat-count{flex:none;font-family:var(--fh);font-size:10px;color:#7d6fa8}.chat-count.warn{color:var(--orange)}
+@media (max-width:430px){ .chat-win{height:100%} .msg-text{font-size:15px} .chat-msg{max-width:100%} }
+@media (max-height:560px){ .chat-bar{margin:6px 2px 4px} .chat-form{margin-top:6px} .chat-new{bottom:96px} }
 /* Écrans d'ordinateur peu hauts : on allège le menu */
 @media (max-height:820px) and (min-width:700px){ #menu .legend,#menu .small{display:none} #menu{padding-top:29vh} }
 /* Écrans paysage peu hauts (téléphone couché) */
@@ -294,6 +355,10 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
   .legend,.small,#menu .help{display:none}
   .help{margin-top:8px}
   .ddesc{min-height:0;font-size:13px}
+  /* Boutons secondaires côte à côte (classement, canal, joueur suivant) */
+  .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;justify-items:stretch}
+  .btnrow .btn{grid-column:1/-1;justify-self:center}
+  .btnrow .btn2{font-size:11px;letter-spacing:1px;padding-left:8px;padding-right:8px;white-space:nowrap}
 }
 </style>
 </head>
@@ -342,7 +407,8 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <div class="ddesc" id="diffDescMenu"></div>
       <div class="best">RECORD <span id="bestMenuLabel"></span> : <b id="bestMenu">0</b></div>
       <div class="btnrow"><button class="btn" id="btnPlay" disabled>⏳ CONNEXION…</button>
-      <button class="btn2" id="btnLeaderboard">🏆 CLASSEMENT</button></div>
+      <button class="btn2" id="btnLeaderboard">🏆 CLASSEMENT</button>
+      <button class="btn2" id="btnChat">💬 CANAL DES PILOTES</button></div>
       <div class="needpseudo hidden" id="needPseudo" role="status">⚠ Choisissez un pseudo pour commencer.</div>
       <div class="help">Maintiens <kbd>CLIC</kbd> <kbd>ESPACE</kbd> ou le doigt sur l'écran pour monter.<br>Relâche pour redescendre.</div>
       <div class="legend">
@@ -398,7 +464,8 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <div class="goonline" id="goOnline"></div>
       <div class="btnrow"><button class="btn" id="btnReplay">↻ REJOUER</button>
       <button class="btn2" id="btnNextPilot">👥 JOUEUR SUIVANT</button>
-      <button class="btn2" id="btnLeaderboard2">🏆 CLASSEMENT</button></div>
+      <button class="btn2" id="btnLeaderboard2">🏆 CLASSEMENT</button>
+      <button class="btn2" id="btnChat2">💬 CANAL DES PILOTES</button></div>
       <div class="small">ou appuie sur Espace</div>
     </div>
   </div>
@@ -418,6 +485,32 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <div class="lb-pilot"><div class="pilot hud js-pilot hidden">👤 <span class="js-pseudo"></span></div>
         <button type="button" class="linkbtn" id="lbEditPseudo">✏ MODIFIER</button></div>
       <div class="lb-msg" id="lbMsg"></div>
+    </div>
+  </div>
+
+  <!-- Canal des Pilotes : chat communautaire (piloté par js/chat.js) -->
+  <div id="chat" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-win chat-win">
+      <div class="modal-head">
+        <div><div class="modal-kicker">COMMUNAUTÉ · ORION EN LIGNE</div><div class="modal-title" id="chatTitle">💬 CANAL DES PILOTES</div></div>
+        <button class="modal-x" data-close type="button" aria-label="Fermer">✕</button>
+      </div>
+      <div class="chat-bar">
+        <button type="button" class="chat-online" id="chatOnline" title="Voir les pilotes en ligne"><i></i><span id="chatOnlineTxt">pilotes en ligne</span></button>
+        <div class="lb-live" id="chatLive"><span class="dot"></span><span id="chatLiveTxt">CONNEXION…</span></div>
+      </div>
+      <div class="chat-online-list hidden" id="chatOnlineList"></div>
+      <div class="chat-feed" id="chatFeed" role="log" aria-live="polite" aria-label="Messages du canal">
+        <button type="button" class="linkbtn chat-older hidden" id="chatOlder">↑ MESSAGES PLUS ANCIENS</button>
+        <ol class="chat-list" id="chatList"></ol>
+      </div>
+      <button type="button" class="chat-new hidden" id="chatNew">▼ NOUVEAUX MESSAGES</button>
+      <form class="chat-form" id="chatForm" autocomplete="off">
+        <input id="chatInput" type="text" maxlength="280" enterkeyhint="send" autocomplete="off" aria-label="Ton message" placeholder="Message aux pilotes… (@ORION pour l'IA)">
+        <button class="chat-send" id="chatSend" type="submit" aria-label="Envoyer">➤</button>
+      </form>
+      <div class="chat-foot"><span class="chat-status" id="chatStatus" role="status"></span><span class="chat-count" id="chatCount">0/280</span></div>
     </div>
   </div>
 
@@ -1908,6 +2001,7 @@ window.addEventListener('keydown',e=>{
   if(settingsOpen()){ if(k==='Escape'||k==='Enter'){ e.preventDefault(); closeSettings(); } return; }
   if(k==='KeyO'){ openSettings(); return; }
   if(k==='KeyL'&&(state==='menu'||state==='over')){ openLeaderboard(); return; }
+  if(k==='KeyC'&&(state==='menu'||state==='over')){ openChat(); return; }
   if(k==='Space'||k==='ArrowUp'||k==='KeyW'||k==='Enter'){
     e.preventDefault(); if(e.repeat) return;
     if(state==='play') press();
@@ -1994,6 +2088,14 @@ function spModuleFailed(){
 }
 if(location.protocol==='file:') setTimeout(()=>{ if(!window.SunPilotIdentity) spModuleFailed(); },1500);
 $('btnLeaderboard2').addEventListener('click',openLeaderboard);
+// Canal des Pilotes (js/chat.js)
+function openChat(){
+  Sound.init();
+  if(window.SunPilotChat) window.SunPilotChat.open();
+  else showBanner(location.protocol==='file:'?'💬 CANAL : VERSION EN LIGNE':'💬 CANAL INDISPONIBLE');
+}
+$('btnChat').addEventListener('click',openChat);
+$('btnChat2').addEventListener('click',openChat);
 </script>
 <!-- Firebase : identité du pilote + classement mondial (modules ES) -->
 <script type="module" src="js/main.js" onerror="spModuleFailed()"></script>

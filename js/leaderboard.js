@@ -102,6 +102,8 @@ async function submitScore({ score, mode, bitcoins, distance, level, profileId }
     if (res === "pending") return { status: "pending" };
     let rank = null;   // un échec du calcul du rang ne doit pas masquer l'enregistrement
     try { rank = await getRank(mode, score, true, pid); } catch (e) { console.warn("[Classement] rang indisponible :", e); }
+    // Canal des Pilotes (js/chat.js) : annonce des records du top 10 mondial
+    window.dispatchEvent(new CustomEvent("sunpilot:onlinerecord", { detail: { mode, score, rank, profileId: pid } }));
     return { status: "ok", best: score, rank };
   } catch (e) {
     console.warn("[Classement] écriture refusée :", e);

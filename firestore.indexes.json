@@ -13,6 +13,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hidden",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -69,6 +83,136 @@
     {
       "collectionGroup": "pseudos",
       "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "text",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "pseudo",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "reports",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "editedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "mode",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "score",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "replyTo",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "moderatedBy",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "moderatedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "messages",
+      "fieldPath": "type",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "presence",
+      "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "presence",
+      "fieldPath": "pseudo",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "uid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "createdAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "welcomedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "lastMsgAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "lastMsgId",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "winStart",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "winCount",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "joinedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "leftAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "chatState",
+      "fieldPath": "recordAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "reporterUid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "authorUid",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "reason",
       "indexes": []
     }
   ]

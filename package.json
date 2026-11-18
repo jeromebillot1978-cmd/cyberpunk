@@ -1,0 +1,12 @@
+{
+  "name": "sun-pilot-neon-skies",
+  "private": true,
+  "type": "module",
+  "description": "Sun Pilot · Neon Skies — jeu statique + fonction serveur ORION (Canal des Pilotes)",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1"
+  }
+}
