@@ -17,6 +17,7 @@ sun-pilot-firebase/
 │   ├── chat.js              ← 💬 Canal des Pilotes (chat temps réel, modération, ORION)
 │   ├── chat-filter.js       ← filtre des messages (partagé avec le serveur ORION)
 │   ├── modal.js             ← fenêtres modales réutilisables (animations)
+│   ├── quiz-questions.js    ← banque de questions du quiz « seconde chance » (script classique)
 │   └── main.js              ← point d'entrée des modules
 ├── api/orion.js             ← ORION, pilote IA du canal (fonction Vercel + firebase-admin)
 ├── package.json             ← dépendance serveur (firebase-admin)
@@ -86,6 +87,17 @@ Aucune variable d'environnement n'est nécessaire : la config web Firebase n'est
 Vercel → projet → *Settings* → *Domains* → ajoute `sunpilot.jercat.fr`. Chez OVH → zone DNS de `jercat.fr` → ajoute un enregistrement **CNAME** `sunpilot` → `cname.vercel-dns.com.` Pense ensuite aux étapes 4.1 et 4.2 pour ce domaine.
 
 ---
+
+## Pièces spéciales et seconde chance (index.html)
+
+| Élément | Effet | Réglage |
+|---|---|---|
+| 🔵 Pièce bleue (bonus) | +5 ₿ et +50 points bruts (×multiplicateur du mode), lueur et étincelles bleues, message « +5 ₿ · +X BONUS » | `SPECIAL.blue` |
+| 🔴 Pièce rouge (malus) | retire 15 % du score (au moins 30 points bruts × mode), jamais sous 0 ; placée à côté du chemin de pièces, ignorée par l'aimant, pulvérisée par le turbo | `SPECIAL.red` |
+| Fréquence | probabilité par groupe de pièces : Débutant 8 % / 7 %, Intermédiaire 6 % / 14 %, Pro 4,5 % / 22 % (bleue / rouge) | `DIFFICULTIES.*.specials` |
+| 🧠 Seconde chance | à la perte de la vie, une question de culture générale (70 questions, 4 choix mélangés). Bonne réponse : +1 vie et 2,5 s d'invulnérabilité ; mauvaise : Game Over. Une fois par partie | `js/quiz-questions.js` |
+
+Le malus porte sur le score et non sur le compteur ₿ : baisser les Bitcoins abaisserait le plafond de plausibilité de `firestore.rules` et un record honnête pourrait être refusé.
 
 ## Modèle de données
 

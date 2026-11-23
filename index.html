@@ -346,6 +346,66 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
 .chat-count{flex:none;font-family:var(--fh);font-size:10px;color:#7d6fa8}.chat-count.warn{color:var(--orange)}
 @media (max-width:430px){ .chat-win{height:100%} .msg-text{font-size:15px} .chat-msg{max-width:100%} }
 @media (max-height:560px){ .chat-bar{margin:6px 2px 4px} .chat-form{margin-top:6px} .chat-new{bottom:96px} }
+/* =========================================================
+   PIÈCES BONUS / MALUS (HUD)
+   ========================================================= */
+/* Le score clignote en bleu (bonus) ou en rouge (malus) */
+#score.fx-blue{animation:scoreBlue .7s ease-out}
+#score.fx-red{animation:scoreRed .7s ease-out}
+@keyframes scoreBlue{0%{color:#bff4ff;transform:scale(1.25);text-shadow:0 0 10px #1e90ff,0 0 30px #00c8ff}100%{transform:none}}
+@keyframes scoreRed{0%{color:#ffd0d8;transform:translateX(-6px) scale(1.15);text-shadow:0 0 10px #ff2a4a,0 0 30px #ff2a4a}
+  20%{transform:translateX(6px)}40%{transform:translateX(-4px)}60%{transform:translateX(3px)}100%{transform:none}}
+/* Message de bonus/malus sous le score (« +5 ₿ BONUS », « -X RÉCOMPENSES ») */
+#coinMsg{min-height:18px;margin-top:4px;font-family:var(--fh);font-weight:900;font-size:14px;letter-spacing:1px;opacity:0}
+#coinMsg.show{animation:coinMsg 1.6s ease-out forwards}
+#coinMsg.blue{color:#7fd8ff;text-shadow:0 0 8px #1e90ff,0 0 18px #00c8ff}
+#coinMsg.red{color:#ff7088;text-shadow:0 0 8px #ff2a4a,0 0 18px #ff2a4a}
+@keyframes coinMsg{0%{opacity:0;transform:translateY(8px) scale(.8)}12%{opacity:1;transform:scale(1.12)}25%{transform:none}75%{opacity:1}100%{opacity:0}}
+/* Vie + seconde chance (quiz) dans le HUD */
+#lifeHud{margin-top:6px;font-family:var(--fh);font-size:11px;letter-spacing:1px;color:#ffd0dc;text-shadow:0 0 6px #ff2a6d}
+#lifeHud .used{color:#8f82b5;text-shadow:none;text-decoration:line-through}
+
+/* =========================================================
+   QUIZ « SECONDE CHANCE » (question de culture générale)
+   Réutilise les classes .modal / .modal-win du classement.
+   ========================================================= */
+.qz-win{max-width:540px}
+.qz-win .modal-title{text-shadow:0 0 8px var(--cyan),0 0 22px var(--violet)}
+.qz-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.qz-cat{display:inline-block;padding:4px 10px;border-radius:999px;font-family:var(--fh);font-size:10px;font-weight:900;letter-spacing:2px;
+  color:var(--cyan);border:1px solid rgba(0,240,255,.6);background:rgba(0,240,255,.08);box-shadow:0 0 10px rgba(0,240,255,.3)}
+.qz-once{font-family:var(--fh);font-size:10px;letter-spacing:1px;color:#ffd0dc}
+.qz-q{margin-top:12px;padding:14px;border-radius:8px;font-weight:700;font-size:clamp(18px,4.4vw,22px);line-height:1.3;color:#fff;
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,47,208,.4);box-shadow:inset 0 0 18px rgba(138,60,255,.2)}
+.qz-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.qz-opt{display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left;
+  font-family:var(--fb);font-weight:700;font-size:17px;line-height:1.2;color:#fff;background:rgba(255,255,255,.05);
+  border:1px solid rgba(0,240,255,.4);box-shadow:0 0 10px rgba(0,240,255,.15);transition:transform .1s,background .15s,border-color .15s;
+  animation:qzOpt .35s both}
+.qz-opt:nth-child(2){animation-delay:.06s}.qz-opt:nth-child(3){animation-delay:.12s}.qz-opt:nth-child(4){animation-delay:.18s}
+@keyframes qzOpt{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.qz-opt:hover:not(:disabled){background:rgba(255,47,208,.14);border-color:var(--pink);transform:translateY(-2px)}
+.qz-opt:active:not(:disabled){transform:scale(.97)}
+.qz-opt:disabled{cursor:default}
+.qz-opt kbd{flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:5px;font-family:var(--fh);font-size:12px;font-weight:900;
+  color:var(--cyan);border:1px solid var(--cyan);background:rgba(0,0,0,.4)}
+.qz-opt.good{background:rgba(57,255,136,.2);border-color:#39ff88;box-shadow:0 0 18px rgba(57,255,136,.6);animation:qzGood .5s both}
+.qz-opt.good kbd{color:#05010c;background:#39ff88;border-color:#39ff88}
+.qz-opt.bad{background:rgba(255,42,74,.22);border-color:#ff2a4a;box-shadow:0 0 18px rgba(255,42,74,.6);animation:qzBad .45s both}
+.qz-opt.bad kbd{color:#fff;background:#ff2a4a;border-color:#ff2a4a}
+.qz-opt.dim{opacity:.4}
+@keyframes qzGood{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:none}}
+@keyframes qzBad{0%,100%{transform:none}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.qz-res{min-height:0;margin-top:12px;padding:0 12px;border-radius:8px;text-align:center;font-family:var(--fh);font-weight:900;letter-spacing:1px;
+  font-size:clamp(16px,4vw,20px);overflow:hidden;max-height:0;transition:max-height .3s,padding .3s}
+.qz-res.show{max-height:160px;padding:12px}
+.qz-res small{display:block;margin-top:6px;font-family:var(--fb);font-weight:700;font-size:15px;letter-spacing:0;color:#e6dcff}
+.qz-res.good{color:#c9ffe0;background:rgba(57,255,136,.1);border:1px solid rgba(57,255,136,.6);text-shadow:0 0 10px #39ff88}
+.qz-res.bad{color:#ffd0d8;background:rgba(255,42,74,.1);border:1px solid rgba(255,42,74,.6);text-shadow:0 0 10px #ff2a4a}
+.qz-hint{margin-top:10px;text-align:center;font-size:13px;color:#a99ad0}
+@media (max-width:430px){ .qz-list{grid-template-columns:1fr} .qz-opt{min-height:48px;font-size:16px} }
+@media (max-height:560px){ .qz-q{padding:10px;font-size:17px} .qz-list{grid-template-columns:1fr 1fr} .qz-opt{min-height:42px;padding:6px 10px} }
+
 /* Écrans d'ordinateur peu hauts : on allège le menu */
 @media (max-height:820px) and (min-width:700px){ #menu .legend,#menu .small{display:none} #menu{padding-top:29vh} }
 /* Écrans paysage peu hauts (téléphone couché) */
@@ -375,6 +435,10 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
       <div class="lbl">SCORE</div>
       <div id="score">0</div>
       <div class="coinrow">₿ <span id="coins">0</span> <span id="combo"></span></div>
+      <!-- Message des pièces bleues (bonus) / rouges (malus) -->
+      <div id="coinMsg" role="status" aria-live="polite"></div>
+      <!-- Vie restante + seconde chance du quiz (une fois par partie) -->
+      <div id="lifeHud">❤ VIE ×1 · <span id="quizHud">🧠 2ᵉ CHANCE</span></div>
       <div id="powers">
         <div class="pw" id="pw-shield" style="color:#00e5ff">🛡 BOUCLIER <div class="bar"><i></i></div></div>
         <div class="pw" id="pw-magnet" style="color:#ff2fd0">🧲 AIMANT <div class="bar"><i></i></div></div>
@@ -415,8 +479,10 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
         <span style="color:#00e5ff">🛡 Bouclier</span>
         <span style="color:#ff2fd0">🧲 Aimant ₿</span>
         <span style="color:#ff9d00">⚡ Turbo</span>
+        <span style="color:#4fc3ff">🔵 Bonus +5 ₿</span>
+        <span style="color:#ff2a4a">🔴 Malus −15 %</span>
       </div>
-      <div class="small">Évite drones, câbles haute tension, hologrammes et hover-cars. Ramasse les Bitcoins !</div>
+      <div class="small">Évite drones, câbles haute tension, hologrammes et hover-cars. Ramasse les Bitcoins, fuis les pièces rouges ! Perdu ? Une question de culture générale peut te sauver (1 fois par partie).</div>
     </div>
   </div>
 
@@ -488,6 +554,21 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
     </div>
   </div>
 
+  <!-- Seconde chance : question de culture générale (questions dans js/quiz-questions.js) -->
+  <div id="quiz" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qzTitle" aria-describedby="qzQuestion">
+    <div class="modal-backdrop"></div>
+    <div class="modal-win qz-win">
+      <div class="modal-head">
+        <div><div class="modal-kicker">⚠ BALLON TOUCHÉ · SECONDE CHANCE</div><div class="modal-title" id="qzTitle">🧠 RÉPONDS POUR REPARTIR</div></div>
+      </div>
+      <div class="qz-meta"><span class="qz-cat" id="qzCat"></span><span class="qz-once">1 SEULE FOIS PAR PARTIE</span></div>
+      <div class="qz-q" id="qzQuestion"></div>
+      <div class="qz-list" id="qzList"></div>
+      <div class="qz-res" id="qzResult" role="status" aria-live="assertive"></div>
+      <div class="qz-hint" id="qzHint">Touche <b>1</b> à <b>4</b> ou clique sur une réponse</div>
+    </div>
+  </div>
+
   <!-- Canal des Pilotes : chat communautaire (piloté par js/chat.js) -->
   <div id="chat" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
     <div class="modal-backdrop" data-close></div>
@@ -554,6 +635,8 @@ button.pilot small{font-family:var(--fh);font-size:10px;letter-spacing:1px;color
   </div>
 </div>
 
+<!-- Banque de questions du quiz « seconde chance » (script classique, sans module) -->
+<script src="js/quiz-questions.js"></script>
 <script>
 'use strict';
 /* =========================================================
@@ -578,6 +661,16 @@ const PS = 0.72;      // échelle du héros en jeu
 const PCOL = { shield:'#00e5ff', magnet:'#ff2fd0', turbo:'#ff9d00' };
 const PMAX = { shield:CFG.shieldTime, magnet:CFG.magnetTime, turbo:CFG.turboTime };
 const PNAME = { shield:'BOUCLIER !', magnet:'AIMANT ₿ !', turbo:'TURBO !' };
+/* Pièces spéciales (les probabilités d'apparition sont dans chaque mode : DIFFICULTIES.*.specials)
+   - bleue : bonus = +5 ₿ et 50 points bruts (×5 une pièce classique, sans combo)
+   - rouge : malus = retire 15 % du score actuel (au moins 30 points bruts × multiplicateur du mode)
+   Le malus porte sur le SCORE et jamais sur le compteur ₿ : retirer des Bitcoins abaisserait
+   le plafond de plausibilité vérifié par firestore.rules (score ≤ 5 × (distance × 2 + bitcoins × 40) + 100)
+   et un record honnête pourrait être refusé par le classement mondial. */
+const SPECIAL = {
+  blue:{ btc:5, raw:50, color:'#1e90ff', light:'#7fd8ff' },
+  red:{ pct:0.15, minRaw:30, color:'#ff2a4a', light:'#ff9db0' },
+};
 
 /* ---------- Petits utilitaires ---------- */
 const rand = (a,b)=>a+Math.random()*(b-a);
@@ -617,6 +710,7 @@ const DIFFICULTIES = {
       'Sol rebondissant, bouclier offert au départ',
       'Bonus fréquents et plus longs, mini-aimant permanent',
       'Tutoriel guidé + explication de chaque obstacle',
+      'Pièces bleues 🔵 un peu plus fréquentes, pièces rouges 🔴 rares',
       'Score ×0,3',
     ],
     scoreMul:0.3,
@@ -631,6 +725,8 @@ const DIFFICULTIES = {
     powerDist:[1100,1700], powerDurMul:1.35, startShield:true, autoMagnet:45,
     aids:{trajectory:true, safePath:true, dangerOutline:true, groundWarn:true, powerTimers:true},
     tutorial:'full', slowmoHints:true, bpm:98,
+    // Pièces spéciales : probabilité d'apparition PAR GROUPE de pièces (voir addSpecialCoins)
+    specials:{blue:0.08, red:0.07},
   },
   intermediate: {
     id:'intermediate', order:1, emoji:'🟡', label:'INTERMÉDIAIRE', short:'INTERMÉD.', color:'#ffd400',
@@ -642,6 +738,7 @@ const DIFFICULTIES = {
       'Aides limitées : alerte voiture, alerte sol, jauges de bonus',
       'Bonus à fréquence normale',
       'Astuces courtes uniquement la première fois',
+      'Pièces bleues 🔵 rares, pièces rouges 🔴 occasionnelles',
       'Score ×1,5',
     ],
     scoreMul:1.5,
@@ -656,6 +753,7 @@ const DIFFICULTIES = {
     powerDist:[2400,3800], powerDurMul:1, startShield:false, autoMagnet:0,
     aids:{trajectory:false, safePath:false, dangerOutline:false, groundWarn:true, powerTimers:true},
     tutorial:'tips', slowmoHints:false, bpm:112,
+    specials:{blue:0.06, red:0.14},
   },
   pro: {
     id:'pro', order:2, emoji:'🔴', label:'PRO', color:'#ff2a4a',
@@ -668,6 +766,7 @@ const DIFFICULTIES = {
       'Hover-cars rapides, alerte sonore très courte seulement',
       'Plafond électrifié, aucune aide visuelle',
       'Bonus rares et plus courts, aucun tutoriel',
+      'Pièces bleues 🔵 très rares, pièces rouges 🔴 fréquentes',
       'Score ×5',
     ],
     scoreMul:5,
@@ -682,6 +781,7 @@ const DIFFICULTIES = {
     powerDist:[5200,7800], powerDurMul:0.7, startShield:false, autoMagnet:0,
     aids:{trajectory:false, safePath:false, dangerOutline:false, groundWarn:false, powerTimers:false},
     tutorial:'none', slowmoHints:false, bpm:132,
+    specials:{blue:0.045, red:0.22},
   },
 };
 // Seuils (en points bruts) à partir desquels chaque obstacle apparaît, ×unlockMul du mode
@@ -811,6 +911,16 @@ const Sound = (()=>{
         tone(f,0.22,'square',0.09,t+d); tone(f/2,0.22,'triangle',0.12,t+d); });
       noise(1.2,0.08,'highpass',9000,5000,t+0.3); },
     gameOver(){ if(!ac) return; [392,330,262,196].forEach((f,i)=>tone(f,0.3,'sawtooth',0.08,ac.currentTime+0.25+i*0.18)); },
+    // Pièce bleue : arpège cristallin montant
+    blue(){ if(!ac) return; const t=ac.currentTime; [1047,1319,1568,2093,2637].forEach((f,i)=>{ tone(f,0.18,'triangle',0.13,t+i*0.05); tone(f*1.5,0.1,'sine',0.05,t+i*0.05+0.02); });
+      noise(0.5,0.05,'highpass',9000,6000,t+0.1); },
+    // Pièce rouge : buzzer descendant + grésillement
+    penalty(){ if(!ac) return; const t=ac.currentTime; tone(420,0.32,'sawtooth',0.14,t,90); tone(300,0.28,'square',0.08,t+0.12,70);
+      noise(0.3,0.18,'bandpass',1400,300,t); },
+    // Quiz : bonne réponse / mauvaise réponse / apparition
+    quizOpen(){ if(!ac) return; const t=ac.currentTime; [523,784,659,988].forEach((f,i)=>tone(f,0.12,'square',0.06,t+i*0.07)); },
+    quizGood(){ if(!ac) return; const t=ac.currentTime; [[523,0],[659,.08],[784,.16],[1047,.24],[1319,.4]].forEach(([f,d])=>{ tone(f,0.2,'square',0.08,t+d); tone(f/2,0.2,'triangle',0.1,t+d); }); },
+    quizBad(){ if(!ac) return; const t=ac.currentTime; tone(220,0.35,'sawtooth',0.12,t,110); tone(165,0.45,'sawtooth',0.1,t+0.2,80); },
   };
 })();
 
@@ -961,7 +1071,8 @@ for(let i=0;i<26;i++) bokeh.push({x:Math.random()*2000,y:Math.random()*700,r:ran
 /* =========================================================
    ÉTAT DU JEU
    ========================================================= */
-let state='menu';                 // menu | play | dying | over | paused
+let state='menu';                 // menu | play | dying | quiz | over | paused
+let quizUsed=false;               // seconde chance (quiz) déjà utilisée pendant cette partie ?
 let time=0, scroll=0, speed=CFG.baseSpeed, curScroll=80, turboMult=1;
 let score=0, coinsCount=0, runDist=0, level=1;
 let bestAtStart=0, runMinOrder=0, rawProg=0, scoreF=0, timeScale=1, slowmo=0;
@@ -1227,10 +1338,12 @@ class Car extends Obstacle{
 }
 
 /* ---------- Pièces Bitcoin ---------- */
-class Coin{ constructor(x,y){ this.x=x; this.y=y; this.r=13; this.t=Math.random()*6; this.mag=false; this.dead=false; } }
+// kind : 'gold' (classique), 'blue' (bonus) ou 'red' (malus)
+class Coin{ constructor(x,y,kind='gold'){ this.x=x; this.y=y; this.kind=kind; this.r=kind==='gold'?13:15; this.t=Math.random()*6; this.mag=false; this.dead=false; this.baseY=y; } }
 function coinLine(x,y,n,dx,arc=0){ for(let i=0;i<n;i++){ const t=n>1?i/(n-1):0; coins.push(new Coin(x+i*dx, clamp(y-Math.sin(t*Math.PI)*arc,40,GROUND-30))); } }
 function coinSine(x,y,n,dx,amp){ for(let i=0;i<n;i++) coins.push(new Coin(x+i*dx, clamp(y+Math.sin(i*0.9)*amp,40,GROUND-30))); }
 function drawCoin(c){
+  if(c.kind!=='gold') return drawSpecialCoin(c);
   const sx=Math.cos(c.t*4), a=Math.abs(sx);
   ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.55; ctx.drawImage(glow('#ffb800'),c.x-24,c.y-24,48,48);
   ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
@@ -1241,6 +1354,41 @@ function drawCoin(c){
   ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,0,9.5,0,7); ctx.stroke();
   if(a>0.35){ ctx.fillStyle='#8a5200'; ctx.font='900 15px "Segoe UI", Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('₿',0,1); ctx.textAlign='left'; }
   ctx.restore();
+}
+
+/* ---------- Pièces spéciales : bleue (bonus) et rouge (malus) ----------
+   Bleue : grande lueur bleue pulsante, anneau tournant, étiquette « +5 ₿ ».
+   Rouge : lueur rouge clignotante, pointes menaçantes, étiquette « −15 % ». */
+function drawSpecialCoin(c){
+  const blue=c.kind==='blue', cfg=blue?SPECIAL.blue:SPECIAL.red;
+  const pulse=1+Math.sin(c.t*(blue?5:9))*0.12, a=Math.abs(Math.cos(c.t*(blue?3:2.2)));
+  ctx.globalCompositeOperation='lighter';
+  ctx.globalAlpha=blue?.85:.6+.25*Math.sin(c.t*12); ctx.drawImage(glow(cfg.color),c.x-40*pulse,c.y-40*pulse,80*pulse,80*pulse);
+  // anneau extérieur (pointillé tournant)
+  ctx.globalAlpha=.9; ctx.strokeStyle=cfg.light; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(c.x,c.y,22*pulse,c.t*3,c.t*3+1.3); ctx.stroke();
+  ctx.beginPath(); ctx.arc(c.x,c.y,22*pulse,c.t*3+3.14,c.t*3+4.44); ctx.stroke();
+  ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+  ctx.save(); ctx.translate(c.x,c.y);
+  if(!blue){ // pointes de la pièce piégée
+    ctx.fillStyle='#ff2a4a';
+    for(let i=0;i<8;i++){ const an=i/8*Math.PI*2+c.t; ctx.beginPath();
+      ctx.moveTo(Math.cos(an-.18)*14,Math.sin(an-.18)*14); ctx.lineTo(Math.cos(an)*21,Math.sin(an)*21); ctx.lineTo(Math.cos(an+.18)*14,Math.sin(an+.18)*14); ctx.fill(); }
+  }
+  ctx.save(); ctx.scale(Math.max(a,0.15),1);
+  const g=ctx.createRadialGradient(-4,-4,1,0,0,15);
+  if(blue){ g.addColorStop(0,'#e6fbff'); g.addColorStop(.5,'#3fb6ff'); g.addColorStop(1,'#0a4fd0'); }
+  else { g.addColorStop(0,'#ffd0d8'); g.addColorStop(.5,'#ff3b5c'); g.addColorStop(1,'#8a0018'); }
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,15,0,7); ctx.fill();
+  ctx.strokeStyle=blue?'#bff4ff':'#ffb3c0'; ctx.lineWidth=2; ctx.stroke();
+  if(a>0.35){ ctx.fillStyle=blue?'#03205a':'#fff'; ctx.font='900 16px "Segoe UI", Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(blue?'₿':'✖',0,1); }
+  ctx.restore();
+  // étiquette de valeur, toujours lisible (le joueur sait ce qu'il gagne ou perd)
+  ctx.font='900 12px Orbitron, "Segoe UI", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle=cfg.light; ctx.shadowColor=cfg.color; ctx.shadowBlur=8;
+  ctx.fillText(blue?'+'+SPECIAL.blue.btc+' ₿':'−'+Math.round(SPECIAL.red.pct*100)+' %',0,-31);
+  ctx.restore(); ctx.textAlign='left';
 }
 
 /* ---------- Bonus (capsules) ---------- */
@@ -1379,7 +1527,7 @@ function spawnChunk(force){
   const types=[];
   for(const [k,w] of Object.entries(d.types)) if(rawProg>=(UNLOCK[k]||0)*d.unlockMul) types.push([k,w]);
   const type=force||weighted(types); let safe=lastSafeY;
-  const first=obstacles.length;
+  const first=obstacles.length, firstCoin=coins.length;
   const gapMul=d.gapMul;
   switch(type){
     case 'gate':{
@@ -1420,10 +1568,34 @@ function spawnChunk(force){
   }
   // Mémorise le passage conseillé (aide "passage vert" en Débutant)
   for(let i=first;i<obstacles.length;i++) if(obstacles[i].safeY===undefined) obstacles[i].safeY=safe;
+  addSpecialCoins(firstCoin,first);
   lastSafeY=clamp(safe,60,GROUND-100);
   const base=lerp(560,400,diff)*d.spacingMul*(type==='wire'?1.25:1)*(type==='combo'?1.3:1)+rand(-30,40);
   nextSpacing=Math.max(base,speed*d.minGapTime);
   hint(type);
+}
+/* Pièces spéciales d'un chunk (appelé par spawnChunk)
+   - bleue : remplace la pièce du milieu du groupe (rare, probabilité « specials.blue » du mode)
+   - rouge : ajoutée À CÔTÉ du chemin de pièces (±70-95 unités), donc évitable en suivant les pièces
+     d'or ; elle n'est jamais placée dans un obstacle. Rien pendant le tutoriel. */
+function addSpecialCoins(fromCoin,fromObs){
+  const sp=D().specials; if(!sp||Tut.step>=0) return;
+  const group=coins.slice(fromCoin).filter(c=>c.kind==='gold');
+  if(group.length<3) return;
+  if(Math.random()<sp.blue){ const c=group[group.length>>1]; c.kind='blue'; c.r=15; }
+  if(Math.random()<sp.red){
+    const ref=group[Math.max(1,Math.round(group.length*0.3))], x=ref.x+rand(-10,40);
+    const sides=Math.random()<.5?[-1,1]:[1,-1];
+    for(const side of sides){
+      const y=ref.y+side*rand(70,95);
+      if(y<50||y>GROUND-45) continue;
+      let blocked=false;
+      for(let i=fromObs;i<obstacles.length&&!blocked;i++) for(const sh of obstacles[i].shapes()){
+        if(sh.r!==undefined ? circCirc(x,y,24,sh.x,sh.y,sh.r) : circRect(x,y,24,sh.x,sh.y,sh.w,sh.h)){ blocked=true; break; }
+      }
+      if(!blocked){ coins.push(new Coin(x,y,'red')); break; }
+    }
+  }
 }
 function spawnPower(){
   const kinds=['shield','magnet','turbo'].filter(k=>P[k]<=0);
@@ -1564,6 +1736,8 @@ function startGame(){
   spawnAcc=-250; nextSpacing=450; powerAcc=0; nextPower=rand(...d.powerDist)*0.8; lastSafeY=P.y;
   combo=0; comboTimer=0; recordAnnounced=false; newRecord=false; fwCount=0;
   idleTime=0;
+  quizUsed=false; Quiz.closeNow(); updateLifeHud(1);
+  $('coinMsg').className=''; $('coinMsg').textContent=''; $('score').classList.remove('fx-blue','fx-red');   // pas de message résiduel
   runMinOrder=d.order; bestAtStart=bests[d.id];
   hintsThisRun.clear(); hideTip(); tutStop();
   if(d.tutorial==='full') tutStart(); else if(d.tutorial==='tips') hint('start');
@@ -1609,6 +1783,117 @@ function showBanner(text,cls=''){
   const b=$('banner'); b.textContent=text; b.className=''; void b.offsetWidth; b.className='show '+cls;
 }
 
+/* =========================================================
+   SECONDE CHANCE : QUESTION DE CULTURE GÉNÉRALE
+   ---------------------------------------------------------
+   Quand le joueur perd sa vie, une fois par partie, une
+   question (js/quiz-questions.js) s'affiche à la place du
+   Game Over. Bonne réponse : +1 vie, la partie reprend avec
+   2,5 s d'invulnérabilité. Mauvaise réponse : Game Over.
+   Si la banque de questions n'a pas pu se charger, le jeu
+   passe directement au Game Over (rien ne casse).
+   ========================================================= */
+// HUD : vies restantes + état de la seconde chance
+function updateLifeHud(lives){
+  $('lifeHud').firstChild.nodeValue=`❤ VIE ×${lives} · `;
+  $('quizHud').className=quizUsed?'used':'';
+  $('quizHud').title=quizUsed?'Seconde chance déjà utilisée':'Une question pour récupérer une vie (1 fois par partie)';
+}
+const Quiz=(()=>{
+  const el=$('quiz'), list=$('qzList'), res=$('qzResult');
+  let current=null, answered=true, timer=null;
+  // Questions valides uniquement (texte + exactement 4 réponses non vides)
+  const bank=()=>(Array.isArray(window.SP_QUIZ_QUESTIONS)?window.SP_QUIZ_QUESTIONS:[])
+    .filter(x=>x&&typeof x.q==='string'&&Array.isArray(x.a)&&x.a.length===4&&x.a.every(r=>typeof r==='string'&&r));
+  // Tirage aléatoire sans répétition tant que toute la banque n'a pas été vue (mémorisé sur l'appareil)
+  function draw(){
+    const b=bank(); let seen=[];
+    try{ seen=JSON.parse(store.get('sp_quiz_seen','[]'))||[]; }catch(e){ seen=[]; }
+    let free=b.map((_,i)=>i).filter(i=>!seen.includes(i));
+    if(!free.length){ seen=[]; free=b.map((_,i)=>i); }
+    const i=pick(free); seen.push(i); store.set('sp_quiz_seen',JSON.stringify(seen.slice(-200)));
+    const src=b[i];
+    // Mélange de Fisher-Yates : la bonne réponse (index 0 dans la banque) change de place
+    const opts=src.a.map((t,k)=>({t,ok:k===0}));
+    for(let k=opts.length-1;k>0;k--){ const j=(Math.random()*(k+1))|0; [opts[k],opts[j]]=[opts[j],opts[k]]; }
+    return { cat:src.cat||'CULTURE G', q:src.q, opts };
+  }
+  function render(){
+    $('qzCat').textContent='📚 '+current.cat;
+    $('qzQuestion').textContent=current.q;
+    list.innerHTML='';
+    current.opts.forEach((o,k)=>{
+      const b=document.createElement('button'); b.type='button'; b.className='qz-opt';
+      const kb=document.createElement('kbd'); kb.textContent=String(k+1);
+      const sp=document.createElement('span'); sp.textContent=o.t;          // textContent : aucun HTML injecté
+      b.append(kb,sp); b.addEventListener('click',()=>answer(k)); list.appendChild(b);
+    });
+    res.className='qz-res'; res.innerHTML=''; $('qzHint').classList.remove('hidden');
+  }
+  function open(){
+    state='quiz'; quizUsed=true; answered=false; holding=false;
+    current=draw(); render(); updateLifeHud(0);
+    $('btnPause').classList.add('hidden'); hideTip();
+    el.classList.remove('hidden','closing'); void el.offsetWidth; el.classList.add('open');
+    document.body.classList.add('modal-open');                       // le jeu ignore clavier/tactile
+    Sound.quizOpen();
+    setTimeout(()=>{ const f=list.querySelector('button'); if(f) f.focus({preventScroll:true}); },400);
+  }
+  function answer(k){
+    if(answered||!current) return; answered=true;
+    const btns=[...list.children], good=current.opts[k].ok, gi=current.opts.findIndex(o=>o.ok);
+    btns.forEach((b,i)=>{ b.disabled=true; if(i===gi) b.classList.add('good'); else if(i===k) b.classList.add('bad'); else b.classList.add('dim'); });
+    $('qzHint').classList.add('hidden');
+    if(good){
+      res.className='qz-res show good'; res.innerHTML='✔ BONNE RÉPONSE !<small>❤ +1 vie récupérée : la partie continue…</small>';
+      Sound.quizGood(); timer=setTimeout(()=>close(revive),1600);
+    } else {
+      res.className='qz-res show bad'; res.innerHTML='✖ MAUVAISE RÉPONSE<small></small>';
+      res.querySelector('small').textContent='La bonne réponse était : '+current.opts[gi].t;
+      Sound.quizBad(); timer=setTimeout(()=>close(gameOver),2300);
+    }
+  }
+  function close(then){
+    el.classList.remove('open'); el.classList.add('closing');
+    setTimeout(()=>{
+      el.classList.add('hidden'); el.classList.remove('closing');
+      if(!document.querySelector('.modal.open')) document.body.classList.remove('modal-open');
+      current=null; if(state==='quiz'&&then) then();
+    },240);   // = durée de l'animation .modal.closing
+  }
+  // Fermeture immédiate (nouvelle partie) : aucun effet sur l'état du jeu
+  function closeNow(){
+    clearTimeout(timer); answered=true; current=null;
+    if(el.classList.contains('hidden')) return;
+    el.classList.add('hidden'); el.classList.remove('open','closing');
+    if(!document.querySelector('.modal.open')) document.body.classList.remove('modal-open');
+  }
+  // Touches 1 à 4 (clavier et pavé numérique) pour répondre
+  window.addEventListener('keydown',e=>{
+    if(state!=='quiz'||answered) return;
+    const m=/^(Digit|Numpad)([1-4])$/.exec(e.code);
+    if(m){ e.preventDefault(); e.stopPropagation(); answer(+m[2]-1); }
+  },true);
+  return { open, closeNow, available:()=>bank().length>0, isOpen:()=>state==='quiz' };
+})();
+// Bonne réponse : le ballon repart, la zone devant lui est dégagée
+function revive(){
+  state='play'; holding=false; idleTime=0;
+  P.x=clamp(W*0.24,110,320); P.y=clamp(lastSafeY,120,GROUND-200); P.vy=-150; P.rot=0; P.tilt=0;
+  P.shield=P.magnet=P.turbo=0; P.invuln=2.5;
+  // retire les obstacles et pièces rouges trop proches pour être évités
+  obstacles=obstacles.filter(o=>o.x>P.x+460);
+  coins=coins.filter(c=>c.kind!=='red'||c.x>P.x+460);
+  spawnAcc=Math.min(spawnAcc,nextSpacing*0.3);
+  updateLifeHud(1);
+  $('btnPause').classList.remove('hidden');
+  Sound.init(); Sound.startMusic(); Sound.power();
+  burst(P.x,P.y+20,'#39ff88',40); emit({type:'ring',x:P.x,y:P.y+20,life:.8,size:14,grow:260,color:'#39ff88'});
+  flash={a:.3,c:'#39ff88'}; popup(P.x,P.y-60,'❤ +1 VIE','#39ff88',24);
+  showBanner('❤ VIE RÉCUPÉRÉE !');
+  last=performance.now();
+}
+
 /* Gestion d'un contact avec un obstacle */
 function handleHit(o){
   if(P.turbo>0){ // le turbo pulvérise ce qui est cassable
@@ -1631,7 +1916,11 @@ function handleHit(o){
 function updateWorld(dt,dx){
   for(const o of obstacles){ o.x-=dx; o.update(dt); }
   obstacles=obstacles.filter(o=>!o.dead && o.x+o.w>-160);
-  for(const c of coins){ c.x-=dx; c.t+=dt; }
+  for(const c of coins){ c.x-=dx; c.t+=dt;
+    if(c.kind==='red') c.y=c.baseY+Math.sin(c.t*2.2)*10;                        // oscillation menaçante
+    else if(c.kind==='blue' && Math.random()<dt*12)                               // étincelles bleues
+      emit({type:'spark',world:true,x:c.x+rand(-14,14),y:c.y+rand(-14,14),vx:rand(-40,40),vy:rand(-90,-20),life:rand(.3,.6),size:2,color:pick(['#7fd8ff','#ffffff','#1e90ff'])});
+  }
   coins=coins.filter(c=>!c.dead && c.x>-40);
   for(const p of powerups){ p.x-=dx; p.t+=dt; }
   powerups=powerups.filter(p=>!p.dead && p.x>-60);
@@ -1639,6 +1928,38 @@ function updateWorld(dt,dx){
 
 // Ajoute des points : le multiplicateur du mode actif s'applique au moment où ils sont gagnés
 function addPoints(raw){ scoreF+=raw*D().scoreMul; rawProg+=raw; }
+
+/* Message court sous le score + clignotement du score (bleu = bonus, rouge = malus) */
+function coinFx(kind,html){
+  const m=$('coinMsg'); m.innerHTML=html; m.className=''; void m.offsetWidth; m.className='show '+kind;
+  const sc=$('score'); sc.classList.remove('fx-blue','fx-red'); void sc.offsetWidth; sc.classList.add('fx-'+kind);
+}
+// Pièce bleue : +5 ₿ et un gros bonus de points (valeur affichée en jeu et dans le HUD)
+function collectBlue(c){
+  const d=D(), cfg=SPECIAL.blue;
+  c.dead=true; combo++; comboTimer=1.4; coinsCount+=cfg.btc;
+  addPoints(cfg.raw); const shown=Math.round(cfg.raw*d.scoreMul);
+  popup(c.x,c.y-18,'+'+shown+' BONUS',cfg.light,24); popup(c.x,c.y+16,'+'+cfg.btc+' ₿','#ffe14d',18);
+  burst(c.x,c.y,cfg.color,34); burst(c.x,c.y,'#ffffff',10);
+  emit({type:'ring',x:c.x,y:c.y,life:.7,size:12,grow:200,color:cfg.light});
+  flash={a:.22,c:cfg.color}; Sound.blue();
+  coinFx('blue',`🔵 +${cfg.btc} ₿ · +${shown} BONUS`);
+}
+// Pièce rouge : retire 15 % du score (score jamais négatif). Le turbo la pulvérise sans pénalité.
+function collectRed(c){
+  const d=D(), cfg=SPECIAL.red;
+  c.dead=true;
+  if(P.turbo>0){ burst(c.x,c.y,cfg.color,18); popup(c.x,c.y-20,'DÉSAMORCÉE','#ff9d00',16); Sound.smash(); return; }
+  score=Math.floor(scoreF);
+  const loss=Math.min(score, Math.max(Math.round(score*cfg.pct), Math.round(cfg.minRaw*d.scoreMul)));
+  scoreF=Math.max(0,scoreF-loss); score=Math.floor(scoreF);
+  combo=0; comboTimer=0;
+  popup(c.x,c.y-20,'-'+loss,cfg.light,26); popup(P.x,P.y-62,'MALUS !',cfg.color,20);
+  burst(c.x,c.y,cfg.color,36); burst(c.x,c.y,'#330008',12);
+  for(let i=0;i<14;i++) emit({type:'spark',x:c.x,y:c.y,vx:rand(-320,320),vy:rand(-320,320),life:rand(.2,.45),size:2.4,color:'#ffd0d8',drag:3});
+  shake=Math.max(shake,9); flash={a:.38,c:cfg.color}; Sound.penalty();
+  coinFx('red',`🔴 -${loss} RÉCOMPENSES`);
+}
 
 function updatePlay(dt){
   const d=D();
@@ -1700,9 +2021,12 @@ function updatePlay(dt){
   // aimant (bonus) + mini-aimant permanent en Débutant
   const magR=P.magnet>0?330:d.autoMagnet;
   for(const c of coins){
-    if(magR>0){ const ddx=P.x-c.x, ddy=P.y+20-c.y; if(ddx*ddx+ddy*ddy<(magR+30)*(magR+30)) c.mag=true; }
+    // l'aimant n'attire jamais les pièces rouges (sinon le malus serait inévitable)
+    if(magR>0 && c.kind!=='red'){ const ddx=P.x-c.x, ddy=P.y+20-c.y; if(ddx*ddx+ddy*ddy<(magR+30)*(magR+30)) c.mag=true; }
     if(c.mag){ const ddx=P.x-c.x, ddy=P.y+20-c.y, dd=Math.hypot(ddx,ddy)||1, v=(900+speed)*dt; c.x+=ddx/dd*Math.min(v,dd); c.y+=ddy/dd*Math.min(v,dd); }
     if(circCirc(pc.x,pc.y,pc.r,c.x,c.y,c.r)||circRect(c.x,c.y,c.r,pr.x,pr.y,pr.w,pr.h)){
+      if(c.kind==='blue'){ collectBlue(c); continue; }
+      if(c.kind==='red'){ collectRed(c); continue; }
       c.dead=true; combo++; comboTimer=1.4; coinsCount++; Tut.coins++;
       const mult=Math.min(1+Math.floor(combo/5),4), raw=10*mult; addPoints(raw);
       const shown=Math.round(raw*d.scoreMul);
@@ -1735,7 +2059,8 @@ function updateDying(dt){
   updateWorld(dt,dx);
   P.vy+=CFG.gravity*D().gravityMul*dt; P.y+=P.vy*dt; P.rot+=3.2*dt;
   if(Math.random()<.8) emit({x:P.x+rand(-15,15),y:P.y+rand(-20,20),vx:rand(-60,60),vy:rand(-120,-40),life:rand(.4,.8),size:rand(8,16),color:pick(['#ff6a00','#ff2fd0','#ffb300']),drag:1});
-  dyingTimer-=dt; if(dyingTimer<=0||P.y>H+150) gameOver();
+  // Première vie perdue : question de culture générale avant le Game Over (une fois par partie)
+  dyingTimer-=dt; if(dyingTimer<=0||P.y>H+150){ if(!quizUsed&&Quiz.available()) Quiz.open(); else gameOver(); }
 }
 
 let last=performance.now();
@@ -2072,7 +2397,7 @@ window.SunPilot = {
   DIFF_LIST, DIFFICULTIES, fmtMul,
   getDiff: ()=>diffId,
   getLocalBests: ()=>({...bests}),
-  isPlaying: ()=>state==='play'||state==='dying',
+  isPlaying: ()=>state==='play'||state==='dying'||state==='quiz',
 };
 function openLeaderboard(){
   Sound.init();
